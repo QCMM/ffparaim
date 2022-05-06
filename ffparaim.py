@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+
 import time
 import os
 import itertools
@@ -18,60 +19,99 @@ from iodata import IOData
 
 
 class FFparAIM(object):
-    """docstring for ffparaim."""
+    """docstring for FFparAIM."""
 
-    def __init__(self, pdb_file, smiles, qm_charge=0, ligand_selection=':1',
-                 receptor_selection=None, n_updates=3, sampling_time=25,
-                 total_qm_calculations=100, method='B3LYP', basis='def2-TZVP',
+    def __init__(self,
+                 pdb_file,
+                 smiles,
+                 qm_charge=0,
+                 ligand_selection=':1',
+                 receptor_selection=None,
+                 n_updates=3,
+                 sampling_time=25,
+                 total_qm_calculations=100,
+                 method='B3LYP',
+                 basis='def2-TZVP',
                  forcefield='openff_unconstrained-1.3.0.offxml'):
 
+        # PDB file of the complete system.
         self.pdb_file = pdb_file
+        # SMILES string of the molecule to derive non-bonded parameters.
         self.smiles = smiles
-        self.qm_charge = qm_charge  # Total qm charge.
-        # Residue index for molecule to calculate charges.
+        # Total charge for the ligand in the QM subsystem.
+        self.qm_charge = qm_charge
+        # Ligand AMBER mask residue index.
         self.ligand_selection = ligand_selection
+        # Receptor AMBER mas residue index for host-guest or protein-ligand systems.
         if receptor_selection is not None:
             self.receptor_selection = receptor_selection
+        # Number of updates for non-bonded parameters.
         self.n_updates = n_updates
-        self.sampling_time = sampling_time  # Sampling time in ns.
+        # Sampling time for trajectories in nanoseconds.
+        self.sampling_time = sampling_time
+        # Number of total QM calculations for polarized electron density.
         self.total_qm_calculations = total_qm_calculations
+        # DFT functional to use in QM calculations.
         self.method = method
+        # Basis set for QM calculations.
         self.basis = basis
+        # Small molecule force field.
         self.forcefield = forcefield
+        # Data dict to store non-bonded parameters per update.
         self.data = dict()
 
-    def run(self, compl=False, output=True, json=False, charges=True, lj=False, symm=True):
+    def run(self,
+            compl=False,
+            output=True,
+            json=False,
+            charges=True,
+            lj=False,
+            symm=True):
+        '''Run documentation.'''
 
+        # Start of protocol execution.
         begin_time = time.time()
-        # Get forcefield parameters.
+        # Get small molecule force field parameters.
         template, molecule = mdt.get_params(self.smiles, self.forcefield)
-        # Create table with r^3 values for isolated atoms.
+        # Derivate Lennard-Jones parameters.
         if lj:
+            # Create an atom database object.
             atomdb = AtomDB(molecule, self.method, self.basis)
+            # Create table with third radial moment values for isolated atoms.
             rcubed_table = atomdb.create_table()
-        # Generate serialized OpenMM system.
+        # Create an OpenMM ForceField object from small molecule template generator.
         ff = mdt.create_forcefield(template)
+        # Read system coordinates from PDB file.
         pdb = mdt.read_pdb(self.pdb_file)
+        # Ligand atoms index
         ligand_atoms_idx = mdt.get_atoms_idx(pdb, self.ligand_selection)
         polar_h_idx = mdt.get_polar_hydrogens(molecule)
         # Apply restraints for complex simulations.
         restraint = True if compl else False
         receptor_atoms_idx = mdt.get_atoms_idx(pdb, self.receptor_selection) if compl else None
-        system = mdt.create_system(ff, pdb, restraint, ligand_atoms_idx, receptor_atoms_idx)
+        # Generate serialized OpenMM system.
+        system = mdt.create_system(ff,
+                                   pdb,
+                                   restraint,
+                                   ligand_atoms_idx,
+                                   receptor_atoms_idx)
         for update in range(self.n_updates):
             # Store charges and polarization energies for each update.
             self.data[update] = list()
             if update == 0:
                 positions = pdb.positions
             # Create an OpenMM simulation object.
-            simulation = mdt.setup_simulation(pdb, system, positions, update)
-            # Write Orca forcefield file.
+            simulation = mdt.setup_simulation(pdb,
+                                              system,
+                                              positions,
+                                              update)
+            # Write ORCA forcefield file.
             orcaff = OrcaForceField(ff, system, pdb)
             params = orcaff.parse_params()
             orcaff.write_paramsfile(params)
             qm_calculations = int(
                 self.total_qm_calculations / self.n_updates) * (update + 1)
-            # Start loop to calculate atomic charges from different conformations.
+            # Starting loop to calculate atomic charges and third radial moments.
             for i in range(qm_calculations):
                 step = int(self.sampling_time * 500000 / qm_calculations)
                 simulation.step(step)
@@ -83,8 +123,11 @@ class FFparAIM(object):
                 qmt.write_qmmm_pdb(qm_region)
                 for inp in ('qmmm', 'pol_corr'):
                     lig = self.ligand_selection if inp is 'pol_corr' else None
-                    qmt.write_orca_input(inp, ligand_selection=lig, method=self.method,
-                                         basis=self.basis, qm_charge=self.qm_charge)
+                    qmt.write_orca_input(inp,
+                                         ligand_selection=lig,
+                                         method=self.method,
+                                         basis=self.basis,
+                                         qm_charge=self.qm_charge)
                 qmt.exec_orca()
                 # Parameter derivation.
                 ffderiv = ForceFieldDerivation()
@@ -96,8 +139,11 @@ class FFparAIM(object):
                 epol = ffderiv.get_epol()
                 rcubed = ffderiv.get_rcubed()
                 # Store data.
-                self.data[update].append(IOData(atffparams={'charges': charges, 'rcubed': rcubed},
-                                                extra={'epol': epol}))
+                self.data[update].append(IOData(atffparams={
+                                                'charges': charges,
+                                                'rcubed': rcubed},
+                                                extra={
+                                                'epol': epol}))
             # Update parameters.
             print('Updating parameters in forcefield ...')
             if charges:
@@ -109,9 +155,15 @@ class FFparAIM(object):
                 new_rcubed = stats.nb_stats(self.data[update], rcubed=True)[0]
                 if symm:
                     new_rcubed = symmetrize(molecule, new_rcubed)
-                sig, eps = get_lj_params(molecule, new_rcubed, rcubed_table)
-            system = mdt.update_params(system, ligand_atoms_idx, polar_h_idx,
-                                       charge=new_charges, sigma=sig, epsilon=eps)
+                sig, eps = get_lj_params(molecule,
+                                         new_rcubed,
+                                         rcubed_table)
+            system = mdt.update_params(system,
+                                       ligand_atoms_idx,
+                                       polar_h_idx,
+                                       charge=new_charges,
+                                       sigma=sig,
+                                       epsilon=eps)
         # Save serialized system.
         xml_file = f'{self.pdb_file[:-4]}.xml'
         mdt.serialize_system(system, xml_file)

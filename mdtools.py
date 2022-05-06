@@ -41,7 +41,7 @@ def get_params(smiles, forcefield):
 
 
 def create_forcefield(template):
-    """Create an OpenMM ForceField class object from an SMIRNOFF/GAFF template generator.
+    """Create an OpenMM ForceField object from an SMIRNOFF/GAFF template generator.
 
     Parameters
     ----------
