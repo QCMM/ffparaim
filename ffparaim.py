@@ -42,6 +42,9 @@ class FFparAIM(object):
         self.qm_charge = qm_charge
         # Ligand AMBER mask residue index.
         self.ligand_selection = ligand_selection
+        # Ligand atoms index.
+        self.ligand_atom_list = mdt.get_atom_idx(self.pdb_file,
+                                                 self.ligand_selection)
         # Receptor AMBER mas residue index for host-guest or protein-ligand systems.
         if receptor_selection is not None:
             self.receptor_selection = receptor_selection
@@ -61,7 +64,7 @@ class FFparAIM(object):
         self.data = dict()
 
     def run(self,
-            compl=False,
+            restraint_dict=None,
             output=True,
             json=False,
             charges=True,
@@ -83,18 +86,11 @@ class FFparAIM(object):
         ff = mdt.create_forcefield(template)
         # Read system coordinates from PDB file.
         pdb = mdt.read_pdb(self.pdb_file)
-        # Ligand atoms index
-        ligand_atoms_idx = mdt.get_atoms_idx(pdb, self.ligand_selection)
+        # Polar hydrogens index for ligand.
         polar_h_idx = mdt.get_polar_hydrogens(molecule)
-        # Apply restraints for complex simulations.
-        restraint = True if compl else False
-        receptor_atoms_idx = mdt.get_atoms_idx(pdb, self.receptor_selection) if compl else None
         # Generate serialized OpenMM system.
         system = mdt.create_system(ff,
-                                   pdb,
-                                   restraint,
-                                   ligand_atoms_idx,
-                                   receptor_atoms_idx)
+                                   pdb)
         for update in range(self.n_updates):
             # Store charges and polarization energies for each update.
             self.data[update] = list()
@@ -104,7 +100,9 @@ class FFparAIM(object):
             simulation = mdt.setup_simulation(pdb,
                                               system,
                                               positions,
-                                              update)
+                                              update,
+                                              restraint_dict,
+                                              self.ligand_atom_list)
             # Write ORCA forcefield file.
             orcaff = OrcaForceField(ff, system, pdb)
             params = orcaff.parse_params()
@@ -176,7 +174,7 @@ class FFparAIM(object):
         print(f'Total time: {round(total_time, 2)} hours')
         return
 
-    def validation(self, overwrite=False, compl=False, **kwargs):
+    def validation(self, overwrite=False, restraint_dict=None, **kwargs):
 
         sampling_time = kwargs['sampling_time'] if 'sampling_time' in kwargs else [
             self.sampling_time]
@@ -198,6 +196,6 @@ class FFparAIM(object):
             self.basis = params[4]
             io.create_parm_dir(self.pdb_file, parm_dir, overwrite)
             os.chdir(parm_dir)
-            self.run(compl, json=True)
+            self.run(restraint_dict, json=True)
             os.chdir('..')
         return
