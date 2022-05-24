@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import numpy as np
 
+
 def nb_stats(datas, charges=False, rcubed=False):
 
     param = 'rcubed' if rcubed else 'charges'

@@ -9,7 +9,7 @@ from ffparaim.restraints import set_restraints
 from simtk.openmm import openmm
 from simtk.openmm import app
 from simtk import unit
-from openforcefield.topology import Molecule
+from openff.toolkit.topology import Molecule
 from openmmforcefields.generators import SMIRNOFFTemplateGenerator
 from openmmforcefields.generators import GAFFTemplateGenerator
 
@@ -28,7 +28,7 @@ def get_params(smiles, forcefield):
     """
 
     # Create an openforcefield Molecule object.
-    molecule = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
+    molecule = Molecule.from_smiles(smiles, allow_undefined_stereo=False)
     if forcefield.startswith('openff'):
         # Create SMIRNOFF template generator.
         template = SMIRNOFFTemplateGenerator(molecules=molecule, forcefield=forcefield)
