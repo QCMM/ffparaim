@@ -2,8 +2,7 @@
 
 import os
 import shutil
-import json
-import attr
+import pickle
 
 from ffparaim import stats
 
@@ -57,11 +56,6 @@ def write_output(data):
     epol_out.close
 
 
-def write_json(data):
-    # create a json compatible object
-    data_json = dict()
-    for update in data.keys():
-        data_json[update] = [attr.asdict(d, retain_collection_types=True) for d in data[update]]
-    # write json
-    with open('ffparaim.json', 'w') as json_out:
-        json.dump(data_json, json_out)
+def to_pickle(data):
+    with open('ffparaim.pickle', 'wb') as outfile:
+        pickle.dump(data, outfile)

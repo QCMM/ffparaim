@@ -39,11 +39,11 @@ class AtomDB(ForceFieldDerivation):
             # Run ORCA calculation.
             qmt.exec_orca(uks=True)
             # Load data of electron density from molden file.
-            self.load_data('orca_uks.molden.input')
+            iodata = self.load_data('orca_uks.molden.input')
             # Set grid with 75 radial shells and 110 angular points per shell.
-            self.set_molgrid(75, 110)
+            self.set_molgrid(iodata)
             # Apply MBIS electronic density partition method.
-            self.do_partitioning(method='mbis')
+            self.do_partitioning(iodata, method='mbis')
             # Add third radial moment value to dict.
             rcubed_table[atn] = self.get_rcubed()[0]
         # Write dict to JSON file.
