@@ -146,6 +146,15 @@ orca_uks_template = """\
     end
 end"""
 
+# String format for .dat output file.
+dat_block = '{0},{1},{2:3f},{3:3f},{4:3f}'
+
+# Template for .dat output file.
+dat_template = """\
+residue,atom_name,atomic_charges,sigma_nanometer,epsilon_kjmol
+${dat_block}
+"""
+
 
 def get_nproc():
     """Get the number of processes for QM calculation."""

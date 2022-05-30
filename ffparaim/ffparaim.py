@@ -13,9 +13,8 @@ from ffparaim.ffderiv import get_lj_params
 from ffparaim.orcaff import OrcaForceField
 from ffparaim.atomdb import AtomDB
 from ffparaim import stats
-from ffparaim import out
+from ffparaim import output
 from ffparaim import utils
-from iodata import IOData
 
 
 class FFparAIM(object):
@@ -140,7 +139,7 @@ class FFparAIM(object):
                 qmt.exec_orca()
                 # Polarization energy calculation.
                 if update + 1 == self.n_updates:
-                    print('Single point calculation for polarization energy ...')
+                    print('Single point calculation for Polarization Energy ...')
                     qmt.write_orca_input('pol_corr',
                                          ligand_selection=self.ligand_selection,
                                          method=self.method,
@@ -186,10 +185,13 @@ class FFparAIM(object):
         # Save serialized system.
         xml_file = f'{self.pdb_file[:-4]}.xml'
         mdt.serialize_system(system, xml_file)
-        # if output:
-        #     out.write_output(self.data)
+        if output:
+            output.to_dat(lig_structure, new_charges, sig, eps)
         if pickle:
             output.to_pickle(self.data)
+        # Get Polarization Energy value.
+        epol_mean, epol_std = stats.epol_stats(self.data[update])
+        print(f'Averaged Polarization Energy (kcal/mol) = {epol_mean} +/- {epol_std}')
         end_time = time.time()
         total_time = utils.get_time(begin_time, end_time)
         print(f'Total time: {round(total_time, 2)} hours')
@@ -215,7 +217,7 @@ class FFparAIM(object):
             self.total_qm_calculations = params[2]
             self.method = params[3]
             self.basis = params[4]
-            out.create_parm_dir(self.pdb_file, parm_dir, overwrite)
+            output.create_parm_dir(self.pdb_file, parm_dir, overwrite)
             os.chdir(parm_dir)
             self.run(restraint_dict, json=True)
             os.chdir('..')

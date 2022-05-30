@@ -46,7 +46,7 @@ warnings.filterwarnings('ignore')
 def separate_components(pdb_file, ligand_selection):
     pdb = pmd.load_file(pdb_file)
     pmd.write_PDB(pdb[ligand_selection], 'lig.pdb')
-    pmd.write_PDB(pdb['!{}'.format(ligand_selection)], 'env.pdb')
+    pmd.write_PDB(pdb[f'!{ligand_selection}'], 'env.pdb')
     return
 
 
@@ -248,11 +248,11 @@ def get_polar_hydrogens(molecule):
 def update_params(system, ligand_atoms_idx, polar_h_idx, charge=None, sigma=None, epsilon=None):
     for i, idx in enumerate(ligand_atoms_idx):
         q = system.getForces()[3].getParticleParameters(
-            idx)[0] if charge is None else round(charge[i], 3)
+            idx)[0] if charge is None else round(charge[i], 6)
         sig = system.getForces()[3].getParticleParameters(
-            idx)[1] if sigma is None or i in polar_h_idx else round(sigma[i], 3)
+            idx)[1] if sigma is None or i in polar_h_idx else round(sigma[i], 6)
         eps = system.getForces()[3].getParticleParameters(
-            idx)[2] if epsilon is None or i in polar_h_idx else round(epsilon[i], 3)
+            idx)[2] if epsilon is None or i in polar_h_idx else round(epsilon[i], 6)
         system.getForces()[3].setParticleParameters(
             idx, charge=q, sigma=sig, epsilon=eps)
     return system
