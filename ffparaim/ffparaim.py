@@ -31,7 +31,7 @@ class FFparAIM(object):
                  total_qm_calculations=100,
                  method='B3LYP',
                  basis='def2-TZVP',
-                 forcefield='openff-2.0.0.offxml'):
+                 forcefield='openff_unconstrained-2.0.0.offxml'):
 
         # PDB file of the complete system.
         self.pdb_file = pdb_file
