@@ -106,7 +106,7 @@ orcaff_blocks = {
 
 # Default template for Orca QM/MM input.
 orca_qmmm_template = """\
-! QMMM ${method} ${basis} Grid4 TightSCF NOFINALGRID KeepDens
+! QMMM ${method} ${basis} DEFGRID3 TightSCF KeepDens
 %output PrintLevel Mini Print[ P_Mulliken ] 1 Print[P_AtCharges_M] 1 end
 %pal nprocs ${nproc} end
 %qmmm
@@ -118,7 +118,7 @@ end
 
 # Default template for Orca polarization correction input.
 orca_pol_corr_template = """\
-! ${method} ${basis} Grid4 TightSCF NOFINALGRID KeepDens
+! ${method} ${basis} DEFGRID3 TightSCF KeepDens
 %output PrintLevel Mini Print[ P_Mulliken ] 1 Print[P_AtCharges_M] 1 end
 %pal nprocs ${nproc} end
 %coords
@@ -133,7 +133,7 @@ end"""
 
 # Default template for Orca UKS calculation input.
 orca_uks_template = """\
-! UKS ${method} ${basis} Grid4 TightSCF NOFINALGRID KeepDens
+! UKS ${method} ${basis} DEFGRID3 TightSCF KeepDens
 %output PrintLevel Mini Print[ P_Mulliken ] 1 Print[P_AtCharges_M] 1 end
 %pal nprocs ${nproc} end
 %coords
