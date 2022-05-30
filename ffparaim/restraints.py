@@ -16,7 +16,7 @@ def set_restraints(top,
         thermodynamic_state = states.ThermodynamicState(system, 298 * unit.kelvin)
         sampler_state = states.SamplerState(positions)
         if ligand_atom_list is not None:
-            topography = Topography(top.topology, ligand_atoms=ligand_atom_list)
+            topography = Topography(top, ligand_atoms=ligand_atom_list)
         if 'harmonic' in restraint_dict.keys():
             restraint = Harmonic(spring_constant=0.2 * unit.kilocalories_per_mole / unit.angstrom**2,
                                  restrained_receptor_atoms=topography.select(restraint_dict['harmonic']['receptor']),

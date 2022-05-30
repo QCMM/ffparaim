@@ -2,8 +2,8 @@
 
 from ffparaim import FFparAIM
 
-pdb_file = 'solvent.pdb'
-smiles = 'CC(=O)OCc1ccccc1'
+pdb_file = 'IPH_solv.pdb'
+smiles = 'c1ccc(cc1)O'
 
 
 # Script for non-bonded parameters derivation.

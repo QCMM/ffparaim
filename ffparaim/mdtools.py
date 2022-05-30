@@ -67,14 +67,13 @@ def prepare_ligand(molecule, forcefield, lig_pdb_file='lig.pdb'):
 
 
 def prepare_enviroment(env_pdb_file='env.pdb'):
-    omm_ff = app.ForceField('tip3p.xml',
-                            'amber99sbildn.xml')
-    env_pdb = read_pdb(env_pdb_file)
-    omm_topology = env_pdb.topology
+    omm_ff = app.ForceField('amber99sbildn.xml', 'tip3p.xml')
+    env_pdb = app.PDBFile(env_pdb_file)
+    omm_topology = env_pdb.getTopology()
     env_system = omm_ff.createSystem(omm_topology, rigidWater=False)
     env_structure = pmd.openmm.load_topology(omm_topology,
                                              env_system,
-                                             xyz=env_pdb.positions)
+                                             xyz=env_pdb.getPositions())
     return env_structure
 
 

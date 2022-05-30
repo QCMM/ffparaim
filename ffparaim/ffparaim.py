@@ -25,7 +25,6 @@ class FFparAIM(object):
                  smiles,
                  qm_charge=0,
                  ligand_selection=':1',
-                 receptor_selection=None,
                  n_updates=3,
                  sampling_time=25,
                  total_qm_calculations=100,
@@ -44,9 +43,6 @@ class FFparAIM(object):
         # Ligand atoms index.
         self.ligand_atom_list = mdt.get_atoms_idx(mdt.read_pdb(self.pdb_file),
                                                   self.ligand_selection)
-        # Receptor AMBER mas residue index for host-guest or protein-ligand systems.
-        if receptor_selection is not None:
-            self.receptor_selection = receptor_selection
         # Number of updates for non-bonded parameters.
         self.n_updates = n_updates
         # Sampling time for trajectories in nanoseconds.
