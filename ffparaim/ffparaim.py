@@ -13,9 +13,8 @@ from ffparaim.ffderiv import get_lj_params
 from ffparaim.orcaff import OrcaForceField
 from ffparaim.atomdb import AtomDB
 from ffparaim import stats
-from ffparaim import out
+from ffparaim import output
 from ffparaim import utils
-from iodata import IOData
 
 
 class FFparAIM(object):
@@ -43,8 +42,8 @@ class FFparAIM(object):
         # Ligand AMBER mask residue index.
         self.ligand_selection = ligand_selection
         # Ligand atoms index.
-        self.ligand_atom_list = mdt.get_atom_idx(self.pdb_file,
-                                                 self.ligand_selection)
+        self.ligand_atom_list = mdt.get_atoms_idx(mdt.read_pdb(self.pdb_file),
+                                                  self.ligand_selection)
         # Receptor AMBER mas residue index for host-guest or protein-ligand systems.
         if receptor_selection is not None:
             self.receptor_selection = receptor_selection
@@ -65,8 +64,8 @@ class FFparAIM(object):
 
     def run(self,
             restraint_dict=None,
-            output=True,
-            json=False,
+            dat=True,
+            pickle=False,
             charges=True,
             lj=False,
             symm=True):
@@ -74,8 +73,8 @@ class FFparAIM(object):
 
         # Start of protocol execution.
         begin_time = time.time()
-        # Get small molecule force field parameters.
-        template, molecule = mdt.get_params(self.smiles, self.forcefield)
+        # Get small molecule definition.
+        molecule = mdt.define_molecule(self.smiles)
         # Derivate Lennard-Jones parameters.
         if lj:
             # Create an atom database object.
@@ -83,14 +82,17 @@ class FFparAIM(object):
             # Create table with third radial moment values for isolated atoms.
             rcubed_table = atomdb.create_table()
         # Create an OpenMM ForceField object from small molecule template generator.
-        ff = mdt.create_forcefield(template)
+        # ff = mdt.create_forcefield(template)
         # Read system coordinates from PDB file.
         pdb = mdt.read_pdb(self.pdb_file)
         # Polar hydrogens index for ligand.
         polar_h_idx = mdt.get_polar_hydrogens(molecule)
         # Generate serialized OpenMM system.
-        system = mdt.create_system(ff,
-                                   pdb)
+        mdt.separate_components(self.pdb_file, self.ligand_selection)
+        lig_structure = mdt.prepare_ligand(molecule, self.forcefield)
+        env_structure = mdt.prepare_enviroment()
+        system = mdt.create_system(lig_structure,
+                                   env_structure)
         for update in range(self.n_updates):
             # Store charges and polarization energies for each update.
             self.data[update] = list()
@@ -104,7 +106,7 @@ class FFparAIM(object):
                                               restraint_dict,
                                               self.ligand_atom_list)
             # Write ORCA forcefield file.
-            orcaff = OrcaForceField(ff, system, pdb)
+            orcaff = OrcaForceField(lig_structure, env_structure)
             params = orcaff.parse_params()
             orcaff.write_paramsfile(params)
             qm_calculations = int(
@@ -113,35 +115,51 @@ class FFparAIM(object):
             for i in range(qm_calculations):
                 step = int(self.sampling_time * 500000 / qm_calculations)
                 simulation.step(step)
-                # Calculate charges and polarization energy for current configuration.
-                print('Calculating charges ...')
+                # Calculate non-bonded parameters and polarization energy for current configuration.
+                print('Calculating non-bonded parameters ...')
                 positions = mdt.get_positions(simulation)
                 mdt.image_molecule()
                 qm_region = qmt.set_qm_atoms(self.ligand_selection)
                 qmt.write_qmmm_pdb(qm_region)
-                for inp in ('qmmm', 'pol_corr'):
+                '''for inp in ('qmmm', 'pol_corr'):
                     lig = self.ligand_selection if inp is 'pol_corr' else None
                     qmt.write_orca_input(inp,
                                          ligand_selection=lig,
                                          method=self.method,
                                          basis=self.basis,
                                          qm_charge=self.qm_charge)
+                qmt.exec_orca()'''
+                # QM/MM calculation.
+                print('QM/MM calculation in progress ...')
+                qmt.write_orca_input('qmmm',
+                                     ligand_selection=None,
+                                     method=self.method,
+                                     basis=self.basis,
+                                     qm_charge=self.qm_charge)
                 qmt.exec_orca()
+                # Polarization energy calculation.
+                if update + 1 == self.n_updates:
+                    print('Single point calculation for Polarization Energy ...')
+                    qmt.write_orca_input('pol_corr',
+                                         ligand_selection=self.ligand_selection,
+                                         method=self.method,
+                                         basis=self.basis,
+                                         qm_charge=self.qm_charge)
+                    qmt.exec_orca(epol=True)
                 # Parameter derivation.
                 ffderiv = ForceFieldDerivation()
-                ffderiv.load_data('orca_qmmm.molden.input')
-                ffderiv.set_molgrid(75, 110)
-                ffderiv.do_partitioning(method='mbis')
+                iodata = ffderiv.load_data('orca_qmmm.molden.input')
+                ffderiv.set_molgrid(iodata)
+                ffderiv.do_partitioning(iodata, method='mbis')
                 # Get data.
-                charges = ffderiv.get_charges()
-                epol = ffderiv.get_epol()
+                charge = ffderiv.get_charges()
                 rcubed = ffderiv.get_rcubed()
+                epol = ffderiv.get_epol() if update + 1 == self.n_updates else None
                 # Store data.
-                self.data[update].append(IOData(atffparams={
-                                                'charges': charges,
-                                                'rcubed': rcubed},
-                                                extra={
-                                                'epol': epol}))
+                iodata.atffparams = {'charges': charge.tolist(),
+                                     'rcubed': rcubed.tolist()}
+                iodata.extra = {'epol': epol}
+                self.data[update].append(iodata)
             # Update parameters.
             print('Updating parameters in forcefield ...')
             if charges:
@@ -149,15 +167,17 @@ class FFparAIM(object):
                 new_charges = stats.nb_stats(self.data[update], charges=True)[0]
                 if symm:
                     new_charges = symmetrize(molecule, new_charges)
+                    # print(new_charges)
             if lj:
                 new_rcubed = stats.nb_stats(self.data[update], rcubed=True)[0]
                 if symm:
                     new_rcubed = symmetrize(molecule, new_rcubed)
+                    # print(new_rcubed)
                 sig, eps = get_lj_params(molecule,
                                          new_rcubed,
                                          rcubed_table)
             system = mdt.update_params(system,
-                                       ligand_atoms_idx,
+                                       self.ligand_atom_list,
                                        polar_h_idx,
                                        charge=new_charges,
                                        sigma=sig,
@@ -166,9 +186,12 @@ class FFparAIM(object):
         xml_file = f'{self.pdb_file[:-4]}.xml'
         mdt.serialize_system(system, xml_file)
         if output:
-            out.write_output(self.data)
-        if json:
-            out.write_json(self.data)
+            output.to_dat(lig_structure, new_charges, sig, eps)
+        if pickle:
+            output.to_pickle(self.data)
+        # Get Polarization Energy value.
+        epol_mean, epol_std = stats.epol_stats(self.data[update])
+        print(f'Averaged Polarization Energy (kcal/mol) = {epol_mean} +/- {epol_std}')
         end_time = time.time()
         total_time = utils.get_time(begin_time, end_time)
         print(f'Total time: {round(total_time, 2)} hours')
@@ -194,7 +217,7 @@ class FFparAIM(object):
             self.total_qm_calculations = params[2]
             self.method = params[3]
             self.basis = params[4]
-            out.create_parm_dir(self.pdb_file, parm_dir, overwrite)
+            output.create_parm_dir(self.pdb_file, parm_dir, overwrite)
             os.chdir(parm_dir)
             self.run(restraint_dict, json=True)
             os.chdir('..')

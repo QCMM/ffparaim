@@ -6,19 +6,20 @@ import sys
 import parmed as pmd
 
 from ffparaim.restraints import set_restraints
-from simtk.openmm import openmm
-from simtk.openmm import app
-from simtk import unit
-from openff.toolkit.topology import Molecule
-from openmmforcefields.generators import SMIRNOFFTemplateGenerator
-from openmmforcefields.generators import GAFFTemplateGenerator
+from openmm import openmm
+from openmm import app
+from openmm import unit
+from openff.toolkit.topology import Molecule, Topology
+from openff.toolkit.typing.engines.smirnoff import ForceField
+# from openmmforcefields.generators import SMIRNOFFTemplateGenerator
+# from openmmforcefields.generators import GAFFTemplateGenerator
 
 
 # Avoid warnings.
 warnings.filterwarnings('ignore')
 
 
-def get_params(smiles, forcefield):
+'''def get_params(smiles, forcefield):
     """Get forcefield parameters for molecule.
 
     Parameters
@@ -39,8 +40,45 @@ def get_params(smiles, forcefield):
         raise Exception('Invalid forcefield.')
     return template, molecule
 
+'''
 
-def create_forcefield(template):
+
+def separate_components(pdb_file, ligand_selection):
+    pdb = pmd.load_file(pdb_file)
+    pmd.write_PDB(pdb[ligand_selection], 'lig.pdb')
+    pmd.write_PDB(pdb[f'!{ligand_selection}'], 'env.pdb')
+    return
+
+
+def define_molecule(smiles):
+    return Molecule.from_smiles(smiles)
+
+
+def prepare_ligand(molecule, forcefield, lig_pdb_file='lig.pdb'):
+    lig_pdb = read_pdb(lig_pdb_file)
+    off_topology = Topology.from_openmm(openmm_topology=lig_pdb.topology,
+                                        unique_molecules=[molecule])
+    off_ff = ForceField(forcefield)
+    lig_system = off_ff.create_openmm_system(off_topology)
+    lig_structure = pmd.openmm.load_topology(lig_pdb.topology,
+                                             lig_system,
+                                             xyz=lig_pdb.positions)
+    return lig_structure
+
+
+def prepare_enviroment(env_pdb_file='env.pdb'):
+    omm_ff = app.ForceField('tip3p.xml',
+                            'amber99sbildn.xml')
+    env_pdb = read_pdb(env_pdb_file)
+    omm_topology = env_pdb.topology
+    env_system = omm_ff.createSystem(omm_topology, rigidWater=False)
+    env_structure = pmd.openmm.load_topology(omm_topology,
+                                             env_system,
+                                             xyz=env_pdb.positions)
+    return env_structure
+
+
+'''def create_forcefield(template):
     """Create an OpenMM ForceField object from an SMIRNOFF/GAFF template generator.
 
     Parameters
@@ -56,6 +94,8 @@ def create_forcefield(template):
     ff.registerTemplateGenerator(template.generator)
     return ff
 
+'''
+
 
 def read_pdb(pdb_file):
     """Read a PDB file.
@@ -67,11 +107,11 @@ def read_pdb(pdb_file):
     """
 
     # Load PDB file.
-    pdb = app.PDBFile(pdb_file)
+    pdb = pmd.load_file(pdb_file)
     return pdb
 
 
-def create_system(ff, pdb):
+'''def create_system(ff, pdb):
     """Create OpenMM system and save it in XML format.
 
     Parameters
@@ -87,6 +127,27 @@ def create_system(ff, pdb):
                              nonbondedMethod=app.PME,
                              nonbondedCutoff=1 * unit.nanometer,
                              constraints=app.HBonds)
+    system.addForce(openmm.MonteCarloBarostat(1 * unit.bar, 298 * unit.kelvin))
+    return system
+'''
+
+
+def create_system(lig_structure, env_structure):
+    """Create OpenMM system and save it in XML format.
+
+    Parameters
+    ----------
+    ff :    simtk.openmm.app.ForceField
+        OpenMM ForceField class object.
+    pdb :   openmm.app.PDBFile
+        OpenMM PDBFile class object.
+    """
+
+    # Create system.
+    system_structure = lig_structure + env_structure
+    system = system_structure.createSystem(nonbondedMethod=app.PME,
+                                           nonbondedCutoff=1 * unit.nanometer,
+                                           constraints=app.HBonds)
     system.addForce(openmm.MonteCarloBarostat(1 * unit.bar, 298 * unit.kelvin))
     return system
 
@@ -186,12 +247,12 @@ def get_polar_hydrogens(molecule):
 
 def update_params(system, ligand_atoms_idx, polar_h_idx, charge=None, sigma=None, epsilon=None):
     for i, idx in enumerate(ligand_atoms_idx):
-        q = system.getForces()[2].getParticleParameters(
-            idx)[0] if charge is None else round(charge[i], 3)
-        sig = system.getForces()[2].getParticleParameters(
-            idx)[1] if sigma is None or i in polar_h_idx else round(sigma[i], 3)
-        eps = system.getForces()[2].getParticleParameters(
-            idx)[2] if epsilon is None or i in polar_h_idx else round(epsilon[i], 3)
-        system.getForces()[2].setParticleParameters(
+        q = system.getForces()[3].getParticleParameters(
+            idx)[0] if charge is None else round(charge[i], 6)
+        sig = system.getForces()[3].getParticleParameters(
+            idx)[1] if sigma is None or i in polar_h_idx else round(sigma[i], 6)
+        eps = system.getForces()[3].getParticleParameters(
+            idx)[2] if epsilon is None or i in polar_h_idx else round(epsilon[i], 6)
+        system.getForces()[3].setParticleParameters(
             idx, charge=q, sigma=sig, epsilon=eps)
     return system
