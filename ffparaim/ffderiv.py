@@ -4,7 +4,6 @@ import numpy as np
 
 from iodata import load_one
 from iodata.utils import nanometer, angstrom, kjmol, kcalmol
-from openmm import unit
 
 from denspart.adapters.horton3 import prepare_input
 from denspart.mbis import MBISProModel

@@ -8,7 +8,7 @@ import ffparaim.mdtools as mdt
 import ffparaim.qmtools as qmt
 
 from ffparaim.ffderiv import ForceFieldDerivation
-from ffparaim.ffderiv import symmetrize
+from ffparaim.ffderiv import symmetrize, normalize_atomic_charges
 from ffparaim.ffderiv import get_lj_params
 from ffparaim.orcaff import OrcaForceField
 from ffparaim.atomdb import AtomDB
@@ -63,7 +63,8 @@ class FFparAIM(object):
             pickle=False,
             charges=True,
             lj=False,
-            symm=True):
+            symm=True,
+            exhaustive=False):
         '''Run documentation.'''
 
         # Start of protocol execution.
@@ -116,31 +117,34 @@ class FFparAIM(object):
                 mdt.image_molecule()
                 qm_region = qmt.set_qm_atoms(self.ligand_selection)
                 qmt.write_qmmm_pdb(qm_region)
-                '''for inp in ('qmmm', 'pol_corr'):
-                    lig = self.ligand_selection if inp is 'pol_corr' else None
-                    qmt.write_orca_input(inp,
-                                         ligand_selection=lig,
-                                         method=self.method,
-                                         basis=self.basis,
-                                         qm_charge=self.qm_charge)
-                qmt.exec_orca()'''
                 # QM/MM calculation.
                 print('QM/MM calculation in progress ...')
-                qmt.write_orca_input('qmmm',
-                                     ligand_selection=None,
-                                     method=self.method,
-                                     basis=self.basis,
-                                     qm_charge=self.qm_charge)
-                qmt.exec_orca()
-                # Polarization energy calculation.
-                if update + 1 == self.n_updates:
-                    print('Single point calculation for Polarization Energy ...')
-                    qmt.write_orca_input('pol_corr',
-                                         ligand_selection=self.ligand_selection,
+                if exhaustive:
+                    for inp in ('qmmm', 'pol_corr'):
+                        pol_corr = True if inp is 'pol_corr' else False
+                        lig = self.ligand_selection if inp is 'pol_corr' else None
+                        qmt.write_orca_input(inp,
+                                             ligand_selection=lig,
+                                             method=self.method,
+                                             basis=self.basis,
+                                             qm_charge=self.qm_charge)
+                        qmt.exec_orca(epol=pol_corr)
+                else:
+                    qmt.write_orca_input('qmmm',
+                                         ligand_selection=None,
                                          method=self.method,
                                          basis=self.basis,
                                          qm_charge=self.qm_charge)
-                    qmt.exec_orca(epol=True)
+                    qmt.exec_orca()
+                    # Polarization energy calculation.
+                    if update + 1 == self.n_updates:
+                        print('Single point calculation for Polarization Energy ...')
+                        qmt.write_orca_input('pol_corr',
+                                             ligand_selection=self.ligand_selection,
+                                             method=self.method,
+                                             basis=self.basis,
+                                             qm_charge=self.qm_charge)
+                        qmt.exec_orca(epol=True)
                 # Parameter derivation.
                 ffderiv = ForceFieldDerivation()
                 iodata = ffderiv.load_data('orca_qmmm.molden.input')
@@ -159,9 +163,12 @@ class FFparAIM(object):
             print('Updating parameters in forcefield ...')
             if charges:
                 sig, eps = None, None
-                new_charges = stats.nb_stats(self.data[update], charges=True)[0]
+                new_atcharges = stats.nb_stats(self.data[update], charges=True)[0]
                 if symm:
-                    new_charges = symmetrize(molecule, new_charges)
+                    norm_atcharges = normalize_atomic_charges(molecule,
+                                                              self.qm_charge,
+                                                              new_atcharges)
+                    atcharges = symmetrize(molecule, norm_atcharges)
                     # print(new_charges)
             if lj:
                 new_rcubed = stats.nb_stats(self.data[update], rcubed=True)[0]
@@ -173,14 +180,14 @@ class FFparAIM(object):
                                          rcubed_table)
             system = mdt.update_params(system,
                                        self.ligand_atom_list,
-                                       charge=new_charges,
+                                       charge=atcharges,
                                        sigma=sig,
                                        epsilon=eps)
         # Save serialized system.
         xml_file = f'{self.pdb_file[:-4]}.xml'
         mdt.serialize_system(system, xml_file)
         if output:
-            output.to_dat(lig_structure, new_charges, sig, eps)
+            output.to_dat(lig_structure, atcharges, sig, eps)
         if pickle:
             output.to_pickle(self.data)
         # Get Polarization Energy value.
