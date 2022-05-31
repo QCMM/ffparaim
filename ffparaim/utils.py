@@ -147,7 +147,7 @@ orca_uks_template = """\
 end"""
 
 # String format for .dat output file.
-dat_block = '{0},{1},{2:3f},{3:3f},{4:3f}'
+dat_block = '{0},{1},{2:6f},{3:6f},{4:6f}'
 
 # Template for .dat output file.
 dat_template = """\

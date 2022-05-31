@@ -4,6 +4,7 @@ import numpy as np
 
 from iodata import load_one
 from iodata.utils import nanometer, angstrom, kjmol, kcalmol
+from openmm import unit
 
 from denspart.adapters.horton3 import prepare_input
 from denspart.mbis import MBISProModel
@@ -125,6 +126,22 @@ class ForceFieldDerivation(object):
     def get_rcubed(self):
         '''Third radial moment from molecular density partitioning.'''
         return self.results['radial_moments'][:, 3] / (angstrom ** 3)
+
+
+def normalize_atomic_charges(molecule, total_charge, atomic_charges):
+    '''Add offsets to each partial charge to ensure that they sum to the formal charge of the molecule,
+    to the limit of a python float's precision. Modifies the partial charges in-place.
+    '''
+    expected_charge = total_charge
+
+    current_charge = 0.
+    for pc in atomic_charges:
+        current_charge += pc
+
+    charge_offset = (expected_charge - current_charge) / molecule.n_atoms
+
+    atomic_charges += charge_offset
+    return atomic_charges
 
 
 def symmetrize(molecule, params):

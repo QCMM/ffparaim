@@ -41,8 +41,7 @@ class FFparAIM(object):
         # Ligand AMBER mask residue index.
         self.ligand_selection = ligand_selection
         # Ligand atoms index.
-        self.ligand_atom_list = mdt.get_atoms_idx(mdt.read_pdb(self.pdb_file),
-                                                  self.ligand_selection)
+        self.ligand_atom_list = None
         # Number of updates for non-bonded parameters.
         self.n_updates = n_updates
         # Sampling time for trajectories in nanoseconds.
@@ -80,22 +79,22 @@ class FFparAIM(object):
         # Create an OpenMM ForceField object from small molecule template generator.
         # ff = mdt.create_forcefield(template)
         # Read system coordinates from PDB file.
-        pdb = mdt.read_pdb(self.pdb_file)
+        # pdb = mdt.read_pdb(self.pdb_file)
         # Polar hydrogens index for ligand.
-        polar_h_idx = mdt.get_polar_hydrogens(molecule)
+        # polar_h_idx = mdt.get_polar_hydrogens(molecule)
         # Generate serialized OpenMM system.
         mdt.separate_components(self.pdb_file, self.ligand_selection)
         lig_structure = mdt.prepare_ligand(molecule, self.forcefield)
         env_structure = mdt.prepare_enviroment()
-        system = mdt.create_system(lig_structure,
-                                   env_structure)
+        system_structure, system = mdt.create_system(lig_structure, env_structure)
+        self.ligand_atom_list = mdt.get_atoms_idx(system_structure, self.ligand_selection)
         for update in range(self.n_updates):
             # Store charges and polarization energies for each update.
             self.data[update] = list()
             if update == 0:
-                positions = pdb.positions
+                positions = system_structure.positions
             # Create an OpenMM simulation object.
-            simulation = mdt.setup_simulation(pdb,
+            simulation = mdt.setup_simulation(system_structure,
                                               system,
                                               positions,
                                               update,
@@ -174,7 +173,6 @@ class FFparAIM(object):
                                          rcubed_table)
             system = mdt.update_params(system,
                                        self.ligand_atom_list,
-                                       polar_h_idx,
                                        charge=new_charges,
                                        sigma=sig,
                                        epsilon=eps)
@@ -187,7 +185,7 @@ class FFparAIM(object):
             output.to_pickle(self.data)
         # Get Polarization Energy value.
         epol_mean, epol_std = stats.epol_stats(self.data[update])
-        print(f'Averaged Polarization Energy (kcal/mol) = {epol_mean} +/- {epol_std}')
+        print(f'Averaged Polarization Energy (kcal/mol) = {epol_mean:6f} +/- {epol_std:6f}')
         end_time = time.time()
         total_time = utils.get_time(begin_time, end_time)
         print(f'Total time: {round(total_time, 2)} hours')

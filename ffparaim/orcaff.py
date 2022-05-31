@@ -7,13 +7,13 @@ from ffparaim import utils
 class OrcaForceField(object):
     """docstring for OrcaForceField."""
 
-    def __init__(self, lig_structure, system_structure):
+    def __init__(self, lig_structure, env_structure):
         '''_system = ff.createSystem(pdb.topology,
                                   nonbondedMethod=app.PME,
                                   nonbondedCutoff=1 * unit.nanometer,
                                   rigidWater=False)
         '''
-        self.system_toppar = lig_structure + system_structure
+        self.system_toppar = lig_structure + env_structure
         self._template = utils.orcaff_template
 
     def parse_params(self):

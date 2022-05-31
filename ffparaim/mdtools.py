@@ -148,7 +148,7 @@ def create_system(lig_structure, env_structure):
                                            nonbondedCutoff=1 * unit.nanometer,
                                            constraints=app.HBonds)
     system.addForce(openmm.MonteCarloBarostat(1 * unit.bar, 298 * unit.kelvin))
-    return system
+    return system_structure, system
 
 
 def serialize_system(system, xml_file):
@@ -159,7 +159,7 @@ def serialize_system(system, xml_file):
         f.write(system_serialized)
 
 
-def setup_simulation(pdb, system, positions, update, restraint_dict=None, ligand_atom_list=None):
+def setup_simulation(system_structure, system, positions, update, restraint_dict=None, ligand_atom_list=None):
     """Setup the OpenMM simulation with the current topology and the input coordinates
      or the current positions depending on the value of update.
     Standard conditions are assumed (298K, 1bar).
@@ -178,14 +178,14 @@ def setup_simulation(pdb, system, positions, update, restraint_dict=None, ligand
 
     """
     if restraint_dict is not None:
-        set_restraints(pdb.topology,
+        set_restraints(system_structure.topology,
                        system,
                        positions,
                        restraint_dict,
                        ligand_atom_list)
     integrator = openmm.LangevinIntegrator(
         298 * unit.kelvin, 1 / unit.picosecond, 0.002 * unit.picoseconds)
-    simulation = app.Simulation(pdb.topology, system, integrator)
+    simulation = app.Simulation(system_structure.topology, system, integrator)
     simulation.reporters.append(app.StateDataReporter(
         sys.stdout, 5000, step=True, potentialEnergy=True, temperature=True, density=True))
     simulation.reporters.append(app.DCDReporter(f'traj_{update}.dcd', 50000))
@@ -215,7 +215,7 @@ def image_molecule(pdbfile='output.pdb'):
                          unitcell_angles=traj.unitcell_angles[0])
 
 
-def get_atoms_idx(pdb, residue_selection):
+def get_atoms_idx(system_structure, residue_selection):
     """Generate an atom index lists for a residue selection.
 
     Parameters
@@ -227,10 +227,8 @@ def get_atoms_idx(pdb, residue_selection):
     residue_selection : str
         Amber-style mask string for residue atoms.
     """
-
-    struct = pmd.openmm.load_topology(pdb.topology)
-    atom_list = struct.atoms
-    res = struct[residue_selection].atoms
+    atom_list = system_structure.atoms
+    res = system_structure[residue_selection].atoms
     atoms_idx = [idx for at in res for idx, atom in enumerate(atom_list) if (
         at.residue.number, at.name) == (atom.residue.number, atom.name)]
     return atoms_idx
@@ -244,14 +242,14 @@ def get_polar_hydrogens(molecule):
     return polar_h_idx
 
 
-def update_params(system, ligand_atoms_idx, polar_h_idx, charge=None, sigma=None, epsilon=None):
+def update_params(system, ligand_atoms_idx, charge=None, sigma=None, epsilon=None):
     for i, idx in enumerate(ligand_atoms_idx):
         q = system.getForces()[3].getParticleParameters(
             idx)[0] if charge is None else round(charge[i], 6)
         sig = system.getForces()[3].getParticleParameters(
-            idx)[1] if sigma is None or i in polar_h_idx else round(sigma[i], 6)
+            idx)[1] if sigma is None else round(sigma[i], 6)
         eps = system.getForces()[3].getParticleParameters(
-            idx)[2] if epsilon is None or i in polar_h_idx else round(epsilon[i], 6)
+            idx)[2] if epsilon is None else round(epsilon[i], 6)
         system.getForces()[3].setParticleParameters(
             idx, charge=q, sigma=sig, epsilon=eps)
     return system
