@@ -69,6 +69,8 @@ class FFparAIM(object):
 
         # Start of protocol execution.
         begin_time = time.time()
+        # Separate componentes of the system.
+        mdt.separate_components(self.pdb_file, self.ligand_selection)
         # Get small molecule definition.
         molecule = mdt.define_molecule(self.smiles)
         # Derivate Lennard-Jones parameters.
@@ -84,7 +86,6 @@ class FFparAIM(object):
         # Polar hydrogens index for ligand.
         # polar_h_idx = mdt.get_polar_hydrogens(molecule)
         # Generate serialized OpenMM system.
-        mdt.separate_components(self.pdb_file, self.ligand_selection)
         lig_structure = mdt.prepare_ligand(molecule, self.forcefield)
         env_structure = mdt.prepare_enviroment()
         system_structure, system = mdt.create_system(lig_structure, env_structure)
@@ -102,7 +103,7 @@ class FFparAIM(object):
                                               restraint_dict,
                                               self.ligand_atom_list)
             # Write ORCA forcefield file.
-            orcaff = OrcaForceField(lig_structure, env_structure)
+            orcaff = OrcaForceField(system_structure, system)
             params = orcaff.parse_params()
             orcaff.write_paramsfile(params)
             qm_calculations = int(
@@ -120,6 +121,7 @@ class FFparAIM(object):
                 # QM/MM calculation.
                 print('QM/MM calculation in progress ...')
                 if exhaustive:
+                    print('Exhaustive Polarization Energy calculation ...')
                     for inp in ('qmmm', 'pol_corr'):
                         pol_corr = True if inp is 'pol_corr' else False
                         lig = self.ligand_selection if inp is 'pol_corr' else None
@@ -138,7 +140,7 @@ class FFparAIM(object):
                     qmt.exec_orca()
                     # Polarization energy calculation.
                     if update + 1 == self.n_updates:
-                        print('Single point calculation for Polarization Energy ...')
+                        print('Polarization Energy calculation ...')
                         qmt.write_orca_input('pol_corr',
                                              ligand_selection=self.ligand_selection,
                                              method=self.method,
@@ -153,7 +155,10 @@ class FFparAIM(object):
                 # Get data.
                 charge = ffderiv.get_charges()
                 rcubed = ffderiv.get_rcubed()
-                epol = ffderiv.get_epol() if update + 1 == self.n_updates else None
+                if exhaustive:
+                    epol = ffderiv.get_epol()
+                else:
+                    epol = ffderiv.get_epol() if update + 1 == self.n_updates else None
                 # Store data.
                 iodata.atffparams = {'charges': charge.tolist(),
                                      'rcubed': rcubed.tolist()}
@@ -165,10 +170,10 @@ class FFparAIM(object):
                 sig, eps = None, None
                 new_atcharges = stats.nb_stats(self.data[update], charges=True)[0]
                 if symm:
+                    atcharges = symmetrize(molecule, new_atcharges)
                     norm_atcharges = normalize_atomic_charges(molecule,
                                                               self.qm_charge,
-                                                              new_atcharges)
-                    atcharges = symmetrize(molecule, norm_atcharges)
+                                                              atcharges)
                     # print(new_charges)
             if lj:
                 new_rcubed = stats.nb_stats(self.data[update], rcubed=True)[0]
@@ -180,14 +185,14 @@ class FFparAIM(object):
                                          rcubed_table)
             system = mdt.update_params(system,
                                        self.ligand_atom_list,
-                                       charge=atcharges,
+                                       charge=norm_atcharges,
                                        sigma=sig,
                                        epsilon=eps)
         # Save serialized system.
         xml_file = f'{self.pdb_file[:-4]}.xml'
         mdt.serialize_system(system, xml_file)
         if output:
-            output.to_dat(lig_structure, atcharges, sig, eps)
+            output.to_dat(lig_structure, norm_atcharges, sig, eps)
         if pickle:
             output.to_pickle(self.data)
         # Get Polarization Energy value.
@@ -220,6 +225,6 @@ class FFparAIM(object):
             self.basis = params[4]
             output.create_parm_dir(self.pdb_file, parm_dir, overwrite)
             os.chdir(parm_dir)
-            self.run(restraint_dict, json=True)
+            self.run(restraint_dict, lj=True, pickle=True)
             os.chdir('..')
         return

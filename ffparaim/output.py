@@ -6,6 +6,7 @@ import pickle
 
 from string import Template
 from ffparaim import utils
+from openmm import unit
 
 
 def create_parm_dir(pdb_file, parm_dir, overwrite):
@@ -27,6 +28,9 @@ def to_pickle(data):
 
 
 def to_dat(lig_structure, charges, sig, eps):
+    if sig is None and eps is None:
+        sig = [atom.usigma / unit.nanometer for atom in lig_structure.atoms]
+        eps = [atom.uepsilon / unit.kilojoule_per_mole for atom in lig_structure.atoms]
     dat_lines = [utils.dat_block.format(
                  atom.residue.name,
                  atom.name,

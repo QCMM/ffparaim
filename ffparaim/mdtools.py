@@ -13,7 +13,7 @@ from openff.toolkit.topology import Molecule, Topology
 from openff.toolkit.typing.engines.smirnoff import ForceField
 # from openmmforcefields.generators import SMIRNOFFTemplateGenerator
 # from openmmforcefields.generators import GAFFTemplateGenerator
-
+from rdkit.Chem import AllChem, AddHs
 
 # Avoid warnings.
 warnings.filterwarnings('ignore')
@@ -50,8 +50,13 @@ def separate_components(pdb_file, ligand_selection):
     return
 
 
-def define_molecule(smiles):
-    return Molecule.from_smiles(smiles)
+def define_molecule(smiles, lig_pdb_file='lig.pdb'):
+    template = AllChem.MolFromSmiles(smiles)
+    template = AddHs(template)
+    pdb = AllChem.MolFromPDBFile(lig_pdb_file, removeHs=False)
+    rdmol = AllChem.AssignBondOrdersFromTemplate(template, pdb)
+    return Molecule.from_rdkit(rdmol)
+    #return Molecule.from_pdb_and_smiles(lig_pdb_file, smiles)
 
 
 def prepare_ligand(molecule, forcefield, lig_pdb_file='lig.pdb'):

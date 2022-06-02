@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+import parmed as pmd
+
 from string import Template
 from ffparaim import utils
 
@@ -7,13 +9,14 @@ from ffparaim import utils
 class OrcaForceField(object):
     """docstring for OrcaForceField."""
 
-    def __init__(self, lig_structure, env_structure):
+    def __init__(self, system_structure, system):
         '''_system = ff.createSystem(pdb.topology,
                                   nonbondedMethod=app.PME,
                                   nonbondedCutoff=1 * unit.nanometer,
                                   rigidWater=False)
         '''
-        self.system_toppar = lig_structure + env_structure
+        self.system_toppar = pmd.openmm.load_topology(system_structure.topology,
+                                                      system)
         self._template = utils.orcaff_template
 
     def parse_params(self):
