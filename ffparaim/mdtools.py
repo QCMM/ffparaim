@@ -4,6 +4,7 @@ import mdtraj
 import sys
 
 import parmed as pmd
+import numpy as np
 
 from ffparaim.restraints import set_restraints
 from openmm import openmm
@@ -11,36 +12,10 @@ from openmm import app
 from openmm import unit
 from openff.toolkit.topology import Molecule, Topology
 from openff.toolkit.typing.engines.smirnoff import ForceField
-# from openmmforcefields.generators import SMIRNOFFTemplateGenerator
-# from openmmforcefields.generators import GAFFTemplateGenerator
 from rdkit.Chem import AllChem, AddHs
 
 # Avoid warnings.
 warnings.filterwarnings('ignore')
-
-
-'''def get_params(smiles, forcefield):
-    """Get forcefield parameters for molecule.
-
-    Parameters
-    ----------
-    smiles :    str
-        SMILES string for the molecule.
-    """
-
-    # Create an openforcefield Molecule object.
-    molecule = Molecule.from_smiles(smiles, allow_undefined_stereo=False)
-    if forcefield.startswith('openff'):
-        # Create SMIRNOFF template generator.
-        template = SMIRNOFFTemplateGenerator(molecules=molecule, forcefield=forcefield)
-    elif forcefield.startswith('gaff'):
-        # Create GAFF template generator.
-        template = GAFFTemplateGenerator(molecules=molecule, forcefield=forcefield)
-    else:
-        raise Exception('Invalid forcefield.')
-    return template, molecule
-
-'''
 
 
 def separate_components(pdb_file, ligand_selection):
@@ -56,11 +31,11 @@ def define_molecule(smiles, lig_pdb_file='lig.pdb'):
     pdb = AllChem.MolFromPDBFile(lig_pdb_file, removeHs=False)
     rdmol = AllChem.AssignBondOrdersFromTemplate(template, pdb)
     return Molecule.from_rdkit(rdmol)
-    #return Molecule.from_pdb_and_smiles(lig_pdb_file, smiles)
+    # return Molecule.from_pdb_and_smiles(lig_pdb_file, smiles)
 
 
 def prepare_ligand(molecule, forcefield, lig_pdb_file='lig.pdb'):
-    lig_pdb = read_pdb(lig_pdb_file)
+    lig_pdb = pmd.load_file(lig_pdb_file)
     off_topology = Topology.from_openmm(openmm_topology=lig_pdb.topology,
                                         unique_molecules=[molecule])
     off_ff = ForceField(forcefield)
@@ -68,7 +43,7 @@ def prepare_ligand(molecule, forcefield, lig_pdb_file='lig.pdb'):
     lig_structure = pmd.openmm.load_topology(lig_pdb.topology,
                                              lig_system,
                                              xyz=lig_pdb.positions)
-    return lig_structure
+    return lig_structure, off_ff
 
 
 def prepare_enviroment(env_pdb_file='env.pdb'):
@@ -80,60 +55,6 @@ def prepare_enviroment(env_pdb_file='env.pdb'):
                                              env_system,
                                              xyz=env_pdb.getPositions())
     return env_structure
-
-
-'''def create_forcefield(template):
-    """Create an OpenMM ForceField object from an SMIRNOFF/GAFF template generator.
-
-    Parameters
-    ----------
-    template :  openmmforcefields.generators.SMIRNOFFTemplateGenerator,
-                openmmforcefields.generators.GAFFFFTemplateGenerator
-        OpenMM SMIRNOFF or GAFF template.
-    """
-
-    # Create an OpenMM ForceField object using AMBER14 TIP3P with compatible ions.
-    ff = app.ForceField('amber/tip3p_standard.xml')
-    # Register the template generator.
-    ff.registerTemplateGenerator(template.generator)
-    return ff
-
-'''
-
-
-def read_pdb(pdb_file):
-    """Read a PDB file.
-
-    Parameters
-    ----------
-    pdb_file :  str
-        PDB filename.
-    """
-
-    # Load PDB file.
-    pdb = pmd.load_file(pdb_file)
-    return pdb
-
-
-'''def create_system(ff, pdb):
-    """Create OpenMM system and save it in XML format.
-
-    Parameters
-    ----------
-    ff :    simtk.openmm.app.ForceField
-        OpenMM ForceField class object.
-    pdb :   openmm.app.PDBFile
-        OpenMM PDBFile class object.
-    """
-
-    # Create system.
-    system = ff.createSystem(pdb.topology,
-                             nonbondedMethod=app.PME,
-                             nonbondedCutoff=1 * unit.nanometer,
-                             constraints=app.HBonds)
-    system.addForce(openmm.MonteCarloBarostat(1 * unit.bar, 298 * unit.kelvin))
-    return system
-'''
 
 
 def create_system(lig_structure, env_structure):
@@ -156,12 +77,40 @@ def create_system(lig_structure, env_structure):
     return system_structure, system
 
 
-def serialize_system(system, xml_file):
+def save_serialized_system(system, xml_file):
     # Serialize system.
     system_serialized = openmm.XmlSerializer.serialize(system)
     # Save XML file.
     with open(xml_file, 'w') as f:
         f.write(system_serialized)
+
+
+def create_smirks_dict(molecule, off_ff, sig, eps):
+    # Get applied SMIRKS patterns
+    applied_parameters = off_ff.label_molecules(molecule.to_topology())
+    patterns = [value.smirks for value in applied_parameters[0]['vdW'].values()]
+    # Create SMIRKS dict with vdW parameters.
+    smirks_dict = dict()
+    for index, pattern in enumerate(patterns):
+        if pattern not in smirks_dict.keys():
+            smirks_dict[pattern] = {'sigma': [sig[index]],
+                                    'epsilon': [eps[index]]}
+        else:
+            smirks_dict[pattern]['sigma'].append(sig[index])
+            smirks_dict[pattern]['epsilon'].append(eps[index])
+    return smirks_dict
+
+
+def save_forcefield(off_ff, smirks_dict, outfile):
+    # Replace vdW parameters for every SMIRKS.
+    for pattern in smirks_dict.keys():
+        rmin_h = (np.array(smirks_dict[pattern]['sigma']).mean()) / (2 ** (5.0 / 6.0)),
+        eps = np.array(smirks_dict[pattern]['epsilon']).mean()
+        # Define the new vdW parameters.
+        vdw_handler = off_ff["vdW"].parameters[pattern]
+        vdw_handler.rmin_half = round(rmin_h, 6) * unit.nanometer
+        vdw_handler.epsilon = round(eps, 6) * unit.kilojoule_per_mole
+    off_ff.to_file(outfile)
 
 
 def setup_simulation(system_structure, system, positions, update, restraint_dict=None, ligand_atom_list=None):
@@ -211,8 +160,10 @@ def get_positions(simulation):
 
 def image_molecule(pdbfile='output.pdb'):
     traj = mdtraj.load(pdbfile)
-    traj.image_molecules()
-    # traj.image_molecules(anchor_molecules=[traj.top.find_molecules()[0]], other_molecules=traj.top.find_molecules()[1:])
+    try:
+        traj.image_molecules()
+    except ValueError:
+        traj.image_molecules(anchor_molecules=[traj.top.find_molecules()[0]], other_molecules=traj.top.find_molecules()[1:])
     pos = mdtraj.utils.in_units_of(traj.xyz[0], traj._distance_unit, "angstroms")
     ucl = mdtraj.utils.in_units_of(traj.unitcell_lengths[0], traj._distance_unit, "angstroms")
     pdb_recentered = mdtraj.formats.PDBTrajectoryFile("output_recenter.pdb", "w")
@@ -237,14 +188,6 @@ def get_atoms_idx(system_structure, residue_selection):
     atoms_idx = [idx for at in res for idx, atom in enumerate(atom_list) if (
         at.residue.number, at.name) == (atom.residue.number, atom.name)]
     return atoms_idx
-
-
-def get_polar_hydrogens(molecule):
-    # check polar hydrogens involved in O-H bond.
-    polar_h = molecule.chemical_environment_matches('[#1:1]-[#8]')
-    # create an atom index list for polar hydrogens.
-    polar_h_idx = [h[0] for h in polar_h] if len(polar_h) > 0 else []
-    return polar_h_idx
 
 
 def update_params(system, ligand_atoms_idx, charge=None, sigma=None, epsilon=None):

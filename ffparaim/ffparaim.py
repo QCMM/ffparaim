@@ -79,14 +79,8 @@ class FFparAIM(object):
             atomdb = AtomDB(molecule, self.method, self.basis)
             # Create table with third radial moment values for isolated atoms.
             rcubed_table = atomdb.create_table()
-        # Create an OpenMM ForceField object from small molecule template generator.
-        # ff = mdt.create_forcefield(template)
-        # Read system coordinates from PDB file.
-        # pdb = mdt.read_pdb(self.pdb_file)
-        # Polar hydrogens index for ligand.
-        # polar_h_idx = mdt.get_polar_hydrogens(molecule)
-        # Generate serialized OpenMM system.
-        lig_structure = mdt.prepare_ligand(molecule, self.forcefield)
+        # Create system.
+        lig_structure, off_ff = mdt.prepare_ligand(molecule, self.forcefield)
         env_structure = mdt.prepare_enviroment()
         system_structure, system = mdt.create_system(lig_structure, env_structure)
         self.ligand_atom_list = mdt.get_atoms_idx(system_structure, self.ligand_selection)
@@ -190,7 +184,9 @@ class FFparAIM(object):
                                        epsilon=eps)
         # Save serialized system.
         xml_file = f'{self.pdb_file[:-4]}.xml'
-        mdt.serialize_system(system, xml_file)
+        mdt.save_serialized_system(system, xml_file)
+        smirks_dict = mdt.create_smirks_dict(molecule, off_ff, sig, eps)
+        mdt.save_forcefield(off_ff, smirks_dict, outfile=f'D-MBIS_{self.forcefield}')
         if output:
             output.to_dat(lig_structure, norm_atcharges, sig, eps)
         if pickle:
