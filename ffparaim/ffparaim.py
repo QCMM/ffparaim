@@ -21,21 +21,14 @@ class FFparAIM(object):
     """docstring for FFparAIM."""
 
     def __init__(self,
-                 pdb_file,
-                 smiles,
                  qm_charge=0,
                  ligand_selection=':1',
                  n_updates=3,
                  sampling_time=25,
                  total_qm_calculations=100,
                  method='B3LYP',
-                 basis='def2-TZVP',
-                 forcefield='openff_unconstrained-2.0.0.offxml'):
+                 basis='def2-TZVP'):
 
-        # PDB file of the complete system.
-        self.pdb_file = pdb_file
-        # SMILES string of the molecule to derive non-bonded parameters.
-        self.smiles = smiles
         # Total charge for the ligand in the QM subsystem.
         self.qm_charge = qm_charge
         # Ligand AMBER mask residue index.
@@ -52,38 +45,53 @@ class FFparAIM(object):
         self.method = method
         # Basis set for QM calculations.
         self.basis = basis
-        # Small molecule force field.
-        self.forcefield = forcefield
         # Data dict to store non-bonded parameters per update.
         self.data = dict()
 
+    def prepare(self,
+                smiles,
+                pdb_file,
+                ff='openff_unconstrained-2.0.0.offxml'):
+        """Prepare documentation."""
+        # SMILES string of the molecule to derive non-bonded parameters.
+        self.smiles = smiles
+        # PDB file of the complete system.
+        self.pdb_file = pdb_file
+        # Small molecule force field.
+        self.forcefield = ff
+        # Separate componentes of the system.
+        mdt.separate_components(self.pdb_file, self.ligand_selection)
+        # Get small molecule definition.
+        molecule = mdt.define_molecule(self.smiles)
+        # Create system.
+        forcefield = mdt.define_forcefield(self.forcefield)
+        lig_structure = mdt.prepare_ligand(molecule, forcefield)
+        env_structure = mdt.prepare_enviroment()
+        system_structure, system = mdt.create_system(lig_structure, env_structure)
+        return molecule, system_structure, system
+
     def run(self,
+            molecule,
+            system_structure,
+            system,
+            off=False,
             restraint_dict=None,
-            dat=True,
+            csv=True,
             pickle=False,
             charges=True,
             lj=False,
             symm=True,
             exhaustive=False):
-        '''Run documentation.'''
-
+        """Run documentation."""
         # Start of protocol execution.
         begin_time = time.time()
-        # Separate componentes of the system.
-        mdt.separate_components(self.pdb_file, self.ligand_selection)
-        # Get small molecule definition.
-        molecule = mdt.define_molecule(self.smiles)
+        self.ligand_atom_list = mdt.get_atoms_idx(system_structure, self.ligand_selection)
         # Derivate Lennard-Jones parameters.
         if lj:
             # Create an atom database object.
             atomdb = AtomDB(molecule, self.method, self.basis)
             # Create table with third radial moment values for isolated atoms.
             rcubed_table = atomdb.create_table()
-        # Create system.
-        lig_structure, off_ff = mdt.prepare_ligand(molecule, self.forcefield)
-        env_structure = mdt.prepare_enviroment()
-        system_structure, system = mdt.create_system(lig_structure, env_structure)
-        self.ligand_atom_list = mdt.get_atoms_idx(system_structure, self.ligand_selection)
         for update in range(self.n_updates):
             # Store charges and polarization energies for each update.
             self.data[update] = list()
@@ -183,17 +191,20 @@ class FFparAIM(object):
                                        sigma=sig,
                                        epsilon=eps)
         # Save serialized system.
-        xml_file = f'{self.pdb_file[:-4]}.xml'
-        mdt.save_serialized_system(system, xml_file)
-        smirks_dict = mdt.create_smirks_dict(molecule, off_ff, sig, eps)
-        mdt.save_forcefield(off_ff, smirks_dict, outfile=f'D-MBIS_{self.forcefield}')
-        if output:
-            output.to_dat(lig_structure, norm_atcharges, sig, eps)
+        mdt.save_serialized_system(system, 'system.xml')
+        if off:
+            off_ff = mdt.define_forcefield(self.forcefield)
+            smirks_dict = mdt.create_smirks_dict(molecule, off_ff, sig, eps)
+            mdt.save_forcefield(off_ff, smirks_dict, outfile=f'd-mbis_{self.forcefield}')
+        if csv:
+            output.to_csv(system_structure[self.ligand_selection], norm_atcharges, sig, eps)
         if pickle:
             output.to_pickle(self.data)
         # Get Polarization Energy value.
         epol_mean, epol_std = stats.epol_stats(self.data[update])
         print(f'Averaged Polarization Energy (kcal/mol) = {epol_mean:6f} +/- {epol_std:6f}')
+        with open('epol.out', 'w') as f:
+            f.write(f'{epol_mean:6f} {epol_std:6f}')
         end_time = time.time()
         total_time = utils.get_time(begin_time, end_time)
         print(f'Total time: {round(total_time, 2)} hours')

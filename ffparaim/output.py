@@ -27,7 +27,7 @@ def to_pickle(data):
         pickle.dump(data, outfile)
 
 
-def to_dat(lig_structure, charges, sig, eps):
+def to_csv(lig_structure, charges, sig, eps):
     if sig is None and eps is None:
         sig = [atom.usigma / unit.nanometer for atom in lig_structure.atoms]
         eps = [atom.uepsilon / unit.kilojoule_per_mole for atom in lig_structure.atoms]

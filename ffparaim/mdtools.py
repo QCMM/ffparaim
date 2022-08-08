@@ -34,16 +34,19 @@ def define_molecule(smiles, lig_pdb_file='lig.pdb'):
     # return Molecule.from_pdb_and_smiles(lig_pdb_file, smiles)
 
 
+def define_forcefield(ff):
+    return ForceField(ff)
+
+
 def prepare_ligand(molecule, forcefield, lig_pdb_file='lig.pdb'):
     lig_pdb = pmd.load_file(lig_pdb_file)
     off_topology = Topology.from_openmm(openmm_topology=lig_pdb.topology,
                                         unique_molecules=[molecule])
-    off_ff = ForceField(forcefield)
-    lig_system = off_ff.create_openmm_system(off_topology)
+    lig_system = forcefield.create_openmm_system(off_topology)
     lig_structure = pmd.openmm.load_topology(lig_pdb.topology,
                                              lig_system,
                                              xyz=lig_pdb.positions)
-    return lig_structure, off_ff
+    return lig_structure
 
 
 def prepare_enviroment(env_pdb_file='env.pdb'):
@@ -104,7 +107,7 @@ def create_smirks_dict(molecule, off_ff, sig, eps):
 def save_forcefield(off_ff, smirks_dict, outfile):
     # Replace vdW parameters for every SMIRKS.
     for pattern in smirks_dict.keys():
-        rmin_h = (np.array(smirks_dict[pattern]['sigma']).mean()) / (2 ** (5.0 / 6.0)),
+        rmin_h = (np.array(smirks_dict[pattern]['sigma']).mean()) / (2 ** (5.0 / 6.0))
         eps = np.array(smirks_dict[pattern]['epsilon']).mean()
         # Define the new vdW parameters.
         vdw_handler = off_ff["vdW"].parameters[pattern]
