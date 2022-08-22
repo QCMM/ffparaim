@@ -13,7 +13,7 @@ def set_restraints(top,
                    ligand_atom_list=None):
     print('Setting restraints ...')
     if restraint_dict is not None:
-        thermodynamic_state = states.ThermodynamicState(system, 298 * unit.kelvin)
+        thermodynamic_state = states.ThermodynamicState(system, 298.15 * unit.kelvin)
         sampler_state = states.SamplerState(positions)
         if ligand_atom_list is not None:
             topography = Topography(top, ligand_atoms=ligand_atom_list)
@@ -30,8 +30,12 @@ def set_restraints(top,
         if 'boresch' in restraint_dict.keys():
             restraint = Boresch(restrained_receptor_atoms=topography.select(restraint_dict['boresch']['receptor']),
                                 restrained_ligand_atoms=topography.select(restraint_dict['boresch']['ligand']),
-                                K_r=20.0 * unit.kilocalories_per_mole / unit.angstrom ** 2,
-                                r_aA0=0.35 * unit.nanometer)
+                                K_r=4184.0 * unit.kilojoule_per_mole / unit.nanometer ** 2,
+                                K_thetaA=41.84 * unit.kilojoule_per_mole / unit.radians ** 2,
+                                K_thetaB=41.84 * unit.kilojoule_per_mole / unit.radians ** 2,
+                                K_phiA=41.84 * unit.kilojoule_per_mole / unit.radians ** 2,
+                                K_phiB=41.84 * unit.kilojoule_per_mole / unit.radians ** 2,
+                                K_phiC=41.84 * unit.kilojoule_per_mole / unit.radians ** 2)
         try:
             restraint.restrain_state(thermodynamic_state)
         except RestraintParameterError:

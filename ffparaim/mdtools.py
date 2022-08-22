@@ -76,7 +76,7 @@ def create_system(lig_structure, env_structure):
     system = system_structure.createSystem(nonbondedMethod=app.PME,
                                            nonbondedCutoff=1 * unit.nanometer,
                                            constraints=app.HBonds)
-    system.addForce(openmm.MonteCarloBarostat(1 * unit.bar, 298 * unit.kelvin))
+    system.addForce(openmm.MonteCarloBarostat(1 * unit.bar, 298.15 * unit.kelvin))
     return system_structure, system
 
 
@@ -119,7 +119,7 @@ def save_forcefield(off_ff, smirks_dict, outfile):
 def setup_simulation(system_structure, system, positions, update, restraint_dict=None, ligand_atom_list=None):
     """Setup the OpenMM simulation with the current topology and the input coordinates
      or the current positions depending on the value of update.
-    Standard conditions are assumed (298K, 1bar).
+    Standard conditions are assumed (298.15 K, 1bar).
 
     Parameters
     ----------
@@ -141,7 +141,7 @@ def setup_simulation(system_structure, system, positions, update, restraint_dict
                        restraint_dict,
                        ligand_atom_list)
     integrator = openmm.LangevinIntegrator(
-        298 * unit.kelvin, 1 / unit.picosecond, 0.002 * unit.picoseconds)
+        298.15 * unit.kelvin, 1 / unit.picosecond, 0.002 * unit.picoseconds)
     simulation = app.Simulation(system_structure.topology, system, integrator)
     simulation.reporters.append(app.StateDataReporter(
         sys.stdout, 5000, step=True, potentialEnergy=True, temperature=True, density=True))
