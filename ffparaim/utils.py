@@ -83,34 +83,13 @@ alpha_table = {
     53: 35.0
 }
 
-# Default template for Orca forcefield.
-orcaff_template = """\
-$$atoms
-${atoms_block}
-$$bonds
-${bonds_block}
-$$angles
-${angles_block}
-$$dihedrals
-${dihedrals_block}\
-"""
-
-# String format for Orca forcefield blocks.
-orcaff_blocks = {
-    'header': '{0:1d} {1:1d} {2:1d}\n',
-    'atoms': '{0:6d}   {1:2s}   {2:10.6f}   {3:10.6f}   {4:10.6f}   {5:10.6f}   {6:10.6f}',
-    'bonds': '{0:6d} {1:10d} {2:10.6f} {3:10.6f}',
-    'angles': '{0:6d}   {1:6d}   {2:6d}   {3:10.6f}   {4:10.6f}',
-    'dihedrals': '{0:6d}   {1:6d}   {2:6d}   {3:6d}   {4:10.6f}   {5:10.6f}   {6:6d}'
-}
-
 # Default template for Orca QM/MM input.
 orca_qmmm_template = """\
 ! QMMM ${method} ${basis} DEFGRID3 TightSCF KeepDens
 %output PrintLevel Mini Print[ P_Mulliken ] 1 Print[P_AtCharges_M] 1 end
 %pal nprocs ${nproc} end
 %qmmm
-    ORCAFFFilename "ORCAFF.prms"
+    ORCAFFFilename "system.ORCAFF.prms"
     Use_QM_InfoFromPDB true     # get QM atoms from pdb file
 end
 *pdbfile ${qm_charge} ${qm_mult} output_qmmm.pdb

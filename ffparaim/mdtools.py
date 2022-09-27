@@ -19,8 +19,14 @@ warnings.filterwarnings('ignore')
 
 
 def separate_components(pdb_file, ligand_selection):
+    """Create PDB files of ligand and molecular environment from PDB file
+    input."""
+
+    # Load PDB input file.
     pdb = pmd.load_file(pdb_file)
+    # Write PDB file for ligand only.
     pmd.write_PDB(pdb[ligand_selection], 'lig.pdb')
+    # Write PDB file for molecular environment.
     pmd.write_PDB(pdb[f'!{ligand_selection}'], 'env.pdb')
     return
 
@@ -31,7 +37,6 @@ def define_molecule(smiles, lig_pdb_file='lig.pdb'):
     pdb = AllChem.MolFromPDBFile(lig_pdb_file, removeHs=False)
     rdmol = AllChem.AssignBondOrdersFromTemplate(template, pdb)
     return Molecule.from_rdkit(rdmol)
-    # return Molecule.from_pdb_and_smiles(lig_pdb_file, smiles)
 
 
 def define_forcefield(ff):
@@ -61,15 +66,8 @@ def prepare_enviroment(env_pdb_file='env.pdb'):
 
 
 def create_system(lig_structure, env_structure):
-    """Create OpenMM system and save it in XML format.
-
-    Parameters
-    ----------
-    ff :    simtk.openmm.app.ForceField
-        OpenMM ForceField class object.
-    pdb :   openmm.app.PDBFile
-        OpenMM PDBFile class object.
-    """
+    """Create OpenMM system from ParmEd Structure objects of ligand
+    and molecular environment."""
 
     # Create system.
     system_structure = lig_structure + env_structure

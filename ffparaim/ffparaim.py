@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 
 import time
-import os
-import itertools
 
 import ffparaim.mdtools as mdt
 import ffparaim.qmtools as qmt
@@ -10,7 +8,6 @@ import ffparaim.qmtools as qmt
 from ffparaim.ffderiv import ForceFieldDerivation
 from ffparaim.ffderiv import symmetrize, normalize_atomic_charges
 from ffparaim.ffderiv import get_lj_params
-from ffparaim.orcaff import OrcaForceField
 from ffparaim.atomdb import AtomDB
 from ffparaim import stats
 from ffparaim import output
@@ -18,7 +15,7 @@ from ffparaim import utils
 
 
 class FFparAIM(object):
-    """docstring for FFparAIM."""
+    """FFparAIM main class for parameter's derivation D-MBIS workflow."""
 
     def __init__(self,
                  qm_charge=0,
@@ -52,7 +49,8 @@ class FFparAIM(object):
                 smiles,
                 pdb_file,
                 ff='openff_unconstrained-2.0.0.offxml'):
-        """Prepare documentation."""
+        """Prepare method for creating main objects for parameter's
+        derivation with D-MBIS workflow based on Open Force Field environment."""
         # SMILES string of the molecule to derive non-bonded parameters.
         self.smiles = smiles
         # PDB file of the complete system.
@@ -82,7 +80,7 @@ class FFparAIM(object):
             lj=False,
             symm=True,
             exhaustive=False):
-        """Run documentation."""
+        """Run method for executing D-MBIS worklfow."""
         # Start of protocol execution.
         begin_time = time.time()
         self.ligand_atom_list = mdt.get_atoms_idx(system_structure, self.ligand_selection)
@@ -104,10 +102,10 @@ class FFparAIM(object):
                                               update,
                                               restraint_dict,
                                               self.ligand_atom_list)
+            # Save serialized system.
+            mdt.save_serialized_system(system, 'system.xml')
             # Write ORCA forcefield file.
-            orcaff = OrcaForceField(system_structure, system)
-            params = orcaff.parse_params()
-            orcaff.write_paramsfile(params)
+            qmt.exec_orca(cmd='mm')
             qm_calculations = int(
                 self.total_qm_calculations / self.n_updates) * (update + 1)
             # Starting loop to calculate atomic charges and third radial moments.
@@ -176,12 +174,10 @@ class FFparAIM(object):
                     norm_atcharges = normalize_atomic_charges(molecule,
                                                               self.qm_charge,
                                                               atcharges)
-                    # print(new_charges)
             if lj:
                 new_rcubed = stats.nb_stats(self.data[update], rcubed=True)[0]
                 if symm:
                     new_rcubed = symmetrize(molecule, new_rcubed)
-                    # print(new_rcubed)
                 sig, eps = get_lj_params(molecule,
                                          new_rcubed,
                                          rcubed_table)
@@ -190,8 +186,8 @@ class FFparAIM(object):
                                        charge=norm_atcharges,
                                        sigma=sig,
                                        epsilon=eps)
-        # Save serialized system.
-        mdt.save_serialized_system(system, 'system.xml')
+            # Save serialized system.
+            mdt.save_serialized_system(system, 'system.xml')
         if off:
             off_ff = mdt.define_forcefield(self.forcefield)
             smirks_dict = mdt.create_smirks_dict(molecule, off_ff, sig, eps)
@@ -204,34 +200,8 @@ class FFparAIM(object):
         epol_mean, epol_std = stats.epol_stats(self.data[update])
         print(f'Averaged Polarization Energy (kcal/mol) = {epol_mean:6f} +/- {epol_std:6f}')
         with open('epol.out', 'w') as f:
-            f.write(f'{epol_mean:6f} {epol_std:6f}')
+            f.write(f'{epol_mean:6f} {epol_std:6f}\n')
         end_time = time.time()
         total_time = utils.get_time(begin_time, end_time)
         print(f'Total time: {round(total_time, 2)} hours')
-        return
-
-    def validation(self, overwrite=False, restraint_dict=None, **kwargs):
-
-        sampling_time = kwargs['sampling_time'] if 'sampling_time' in kwargs else [
-            self.sampling_time]
-        n_updates = kwargs['n_updates'] if 'n_updates' in kwargs else [self.n_updates]
-        total_qm_calculations = kwargs['total_qm_calculations'] if 'total_qm_calculations' in kwargs else [
-            self.total_qm_calculations]
-        method = kwargs['method'] if 'method' in kwargs else [self.method]
-        basis = kwargs['basis'] if 'basis' in kwargs else [self.basis]
-        params_list = [sampling_time, n_updates,
-                       total_qm_calculations, method, basis]
-        params_comb = list(itertools.product(*params_list))
-        for params in params_comb:
-            parm_dir = f's_{params[0]}_n_{params[1]}_t_{params[2]}_m_{params[3]}_b_{params[4]}'
-            self.data = dict()
-            self.sampling_time = params[0]
-            self.n_updates = params[1]
-            self.total_qm_calculations = params[2]
-            self.method = params[3]
-            self.basis = params[4]
-            output.create_parm_dir(self.pdb_file, parm_dir, overwrite)
-            os.chdir(parm_dir)
-            self.run(restraint_dict, lj=True, pickle=True)
-            os.chdir('..')
         return

@@ -9,7 +9,8 @@ from ffparaim.ffderiv import ForceFieldDerivation
 
 
 class AtomDB(ForceFieldDerivation):
-    """docstring for AtomDB."""
+    """AtomDB main class for creating a third radial moment database
+    for isoled atoms."""
 
     def __init__(self, molecule, method, basis):
         super().__init__()
@@ -37,7 +38,7 @@ class AtomDB(ForceFieldDerivation):
                                  basis=self.basis,
                                  qm_mult=utils.mult_table[atn])
             # Run ORCA calculation.
-            qmt.exec_orca(uks=True)
+            qmt.exec_orca(cmd='uks')
             # Load data of electron density from molden file.
             iodata = self.load_data('orca_uks.molden.input')
             # Set grid with 75 radial shells and 110 angular points per shell.

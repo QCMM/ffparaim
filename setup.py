@@ -46,7 +46,7 @@ setup(
 
     # Additional entries you may want simply uncomment the lines you want and fill in the data
     # url='http://www.my_package.com',  # Website
-    install_requires=['yank>=0.25.2', 'parmed>=3.4.3'],              # Required packages, pulls from pip if needed; do not use for Conda deployment
+    install_requires=['yank>=0.25.2', 'openff-toolkit>=0.10.6'],              # Required packages, pulls from pip if needed; do not use for Conda deployment
     platforms=['Linux'],
     #            'Mac OS-X',
     #            'Unix',

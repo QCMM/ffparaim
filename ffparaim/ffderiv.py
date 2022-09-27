@@ -19,7 +19,8 @@ np.seterr(all='warn')
 
 
 class ForceFieldDerivation(object):
-    """docstring for ForceFieldDerivation."""
+    """ForceFieldDerivation main class for obtaining non-bonded parameters
+    from molecular electronic density partitioning."""
 
     def __init__(self):
         self.data = None
@@ -76,6 +77,7 @@ class ForceFieldDerivation(object):
             print("MBIS partitioning ...")
             pro_model_init = MBISProModel.from_geometry(iodata.atnums,
                                                         iodata.atcoords)
+            # Kullback-Leibler divergence optimization.
             self.pro_model, self.localgrids = optimize_reduce_pro_model(pro_model_init,
                                                                         self.grid,
                                                                         density,
@@ -131,14 +133,16 @@ def normalize_atomic_charges(molecule, total_charge, atomic_charges):
     '''Add offsets to each partial charge to ensure that they sum to the formal charge of the molecule,
     to the limit of a python float's precision. Modifies the partial charges in-place.
     '''
-    expected_charge = total_charge
 
+    # Set expected charge equal to molecular total charge.
+    expected_charge = total_charge
+    # Iterate over every atom to extract "real" molecular charge.
     current_charge = 0.
     for pc in atomic_charges:
         current_charge += pc
-
+    # Calculate offset applied in every atom.
     charge_offset = (expected_charge - current_charge) / molecule.n_atoms
-
+    # Update atomic charges array with offset correction.
     atomic_charges += charge_offset
     return atomic_charges
 

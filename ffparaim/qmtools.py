@@ -59,15 +59,17 @@ def write_orca_input(orca_inp, atom=None, ligand_selection=None,
         print(Template(template).substitute(fields), file=f)
 
 
-def exec_orca(uks=False, epol=False):
+def exec_orca(cmd='ks', epol=False):
     """Generate commandline for Orca QM calculations."""
     cmdline = "cd " + os.getcwd() + "; "
     # Check if orca is in the PATH
     orca_cmd = shutil.which('orca')
     if orca_cmd is not None:
-        if uks:
+        if cmd == 'uks':
             cmdline += orca_cmd + " orca_uks.inp > orca_uks.out; "
             cmdline += orca_cmd + "_2mkl" + " orca_uks -molden > /dev/null "
+        elif cmd == 'mm':
+            cmdline += orca_cmd + "_mm" + " -convff -OPENMM system.xml "
         else:
             cmdline += orca_cmd + " orca_qmmm.inp > orca_qmmm.out; cp orca_qmmm.gbw orca_pol_corr.gbw; "
             cmdline += orca_cmd + "_2mkl" + " orca_qmmm -molden > /dev/null; "
