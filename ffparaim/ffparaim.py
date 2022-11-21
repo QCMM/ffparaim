@@ -48,7 +48,8 @@ class FFparAIM(object):
     def prepare(self,
                 smiles,
                 pdb_file,
-                ff='openff_unconstrained-2.0.0.offxml'):
+                ff_lig='openff_unconstrained-2.0.0.offxml',
+                ff_env=['amber14-all.xml', 'amber14/tip3p.xml']):
         """Prepare method for creating main objects for parameter's
         derivation with D-MBIS workflow based on Open Force Field environment."""
         # SMILES string of the molecule to derive non-bonded parameters.
@@ -56,7 +57,7 @@ class FFparAIM(object):
         # PDB file of the complete system.
         self.pdb_file = pdb_file
         # Small molecule force field.
-        self.forcefield = ff
+        self.forcefield = ff_lig
         # Separate componentes of the system.
         mdt.separate_components(self.pdb_file, self.ligand_selection)
         # Get small molecule definition.
@@ -64,7 +65,7 @@ class FFparAIM(object):
         # Create system.
         forcefield = mdt.define_forcefield(self.forcefield)
         lig_structure = mdt.prepare_ligand(molecule, forcefield)
-        env_structure = mdt.prepare_enviroment()
+        env_structure = mdt.prepare_enviroment(ff_env)
         system_structure, system = mdt.create_system(lig_structure, env_structure)
         return molecule, system_structure, system
 
@@ -95,11 +96,14 @@ class FFparAIM(object):
             self.data[update] = list()
             if update == 0:
                 positions = system_structure.positions
+            # Save snapshots in trajectory.
+            frames = int(self.sampling_time * 500000 / self.total_qm_calculations)
             # Create an OpenMM simulation object.
             simulation = mdt.setup_simulation(system_structure,
                                               system,
                                               positions,
                                               update,
+                                              frames,
                                               restraint_dict,
                                               self.ligand_atom_list)
             # Save serialized system.
@@ -123,8 +127,8 @@ class FFparAIM(object):
                 if exhaustive:
                     print('Exhaustive Polarization Energy calculation ...')
                     for inp in ('qmmm', 'pol_corr'):
-                        pol_corr = True if inp is 'pol_corr' else False
-                        lig = self.ligand_selection if inp is 'pol_corr' else None
+                        pol_corr = True if inp == 'pol_corr' else False
+                        lig = self.ligand_selection if inp == 'pol_corr' else None
                         qmt.write_orca_input(inp,
                                              ligand_selection=lig,
                                              method=self.method,
@@ -199,8 +203,7 @@ class FFparAIM(object):
         # Get Polarization Energy value.
         epol_mean, epol_std = stats.epol_stats(self.data[update])
         print(f'Averaged Polarization Energy (kcal/mol) = {epol_mean:6f} +/- {epol_std:6f}')
-        with open('epol.out', 'w') as f:
-            f.write(f'{epol_mean:6f} {epol_std:6f}\n')
+        output.to_dat(epol_mean, epol_std, 'epol.dat')
         end_time = time.time()
         total_time = utils.get_time(begin_time, end_time)
         print(f'Total time: {round(total_time, 2)} hours')

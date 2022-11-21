@@ -41,8 +41,8 @@ class ForceFieldDerivation(object):
 
     def set_molgrid(self,
                     iodata,
-                    nrad=75,
-                    nang=110,
+                    nrad=150,  # Old value: 75
+                    nang=194,  # Old value: 110
                     chunk_size=10000,
                     gradient=False,
                     orbitals=False,

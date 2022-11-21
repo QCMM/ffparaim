@@ -137,14 +137,23 @@ ${dat_block}
 
 def get_nproc():
     """Get the number of processes for QM calculation."""
+
+    # If OpenMPI variable is defined in the environment.
     if 'OMP_NUM_THREADS' in os.environ:
+        # Get number of processes from OpenMPI variable.
         nproc = int(os.environ['OMP_NUM_THREADS'])
+    # If SLURM variable is defined in the environment.
     elif 'SLURM_NTASKS' in os.environ:
+        # Get number of processes from SLURM number of tasks.
         nproc = int(os.environ['SLURM_NTASKS']) - 4
+    # If none of above are defined.
     else:
+        # Default number of processes.
         nproc = 1
     return nproc
 
 
 def get_time(begin_time, end_time):
+    """Get total time of execution."""
+
     return (end_time - begin_time) / 3600
