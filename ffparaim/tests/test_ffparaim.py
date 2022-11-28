@@ -61,7 +61,7 @@ def test_ffparaim_prepare_invalid(tmpdir):
         pytest.raises(ValueError, ffp.prepare, 'CO', str(pdb))
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+'''@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_ffparaim_run(tmpdir):
     os.chdir(tmpdir)
     ffp = ffparaim.FFparAIM(n_updates=1, sampling_time=0.001, total_qm_calculations=1)
@@ -69,3 +69,4 @@ def test_ffparaim_run(tmpdir):
         molecule, system_structure, system = ffp.prepare('c1ccc(cc1)O', str(pdb))
     ffp.run(molecule, system_structure, system, off=True)
     assert_equal(ffp.ligand_atom_list, range(0, 13))
+'''

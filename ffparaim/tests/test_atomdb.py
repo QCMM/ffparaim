@@ -5,7 +5,7 @@ Unit and regression test for the ffparaim package. Testing atomdb.py.
 # Import package, test suite, and other packages as needed
 import os
 import pytest
-import filecmp
+# import filecmp
 import ffparaim
 
 
@@ -30,10 +30,10 @@ def test_atomdb_invalid(tmpdir):
     os.chdir(tmpdir)
     ffp = ffparaim.FFparAIM()
     pytest.raises(TypeError, ffparaim.AtomDB)
-    pytest.raises(TypeError, ffparaim.AtomDB, 'CO', ffp.method, ffp.basis)
+    pytest.raises(ValueError, ffparaim.AtomDB, 'CO', ffp.method, ffp.basis)
 
 
-def test_create_table(tmpdir):
+'''def test_create_table(tmpdir):
     os.chdir(tmpdir)
     ffp = ffparaim.FFparAIM()
     with as_file(files('ffparaim.data').joinpath('solvent.pdb')) as pdb:
@@ -43,3 +43,4 @@ def test_create_table(tmpdir):
     rcubed_table_ref = {"8": 3.2555507175615275, "1": 1.1713382554315122, "6": 5.179509879206654}
     assert filecmp.cmp(os.path.join(tmpdir, 'rcubed_table.json'), files('ffparaim.data').joinpath('rcubed.json')) == 0
     assert rcubed_table == rcubed_table_ref
+'''

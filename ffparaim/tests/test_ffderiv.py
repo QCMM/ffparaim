@@ -38,4 +38,4 @@ def test_load_data():
 
 def test_load_data_invalid():
     ffd = ffparaim.ForceFieldDerivation()
-    pytest.raises(TypeError, ffd.load_data, 'data')
+    pytest.raises(ValueError, ffd.load_data, 'data')
