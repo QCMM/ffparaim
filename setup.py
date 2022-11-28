@@ -3,7 +3,7 @@ ffparaim
 Derivation of non-bonded non-polarizable force field parameters from Atom in Molecule properties.
 """
 import sys
-from setuptools import setup, find_packages
+from setuptools import setup
 import versioneer
 
 short_description = "Derivation of non-bonded non-polarizable force field parameters from Atom in Molecule properties.".split("\n")[0]
@@ -15,7 +15,7 @@ pytest_runner = ['pytest-runner'] if needs_pytest else []
 try:
     with open("README.md", "r") as handle:
         long_description = handle.read()
-except:
+except FileNotFoundError:
     long_description = None
 
 
@@ -34,7 +34,9 @@ setup(
     # Which Python importable modules should be included when your package is installed
     # Handled automatically by setuptools. Use 'exclude' to prevent some specific
     # subpackage(s) from being added, if needed
-    packages=find_packages(),
+    packages=['ffparaim',
+              'ffparaim.test',
+              'ffparaim.data'],
 
     # Optional include package data to ship with your package
     # Customize MANIFEST.in if the general case does not suit your needs

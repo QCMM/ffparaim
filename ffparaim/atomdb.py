@@ -6,6 +6,7 @@ import ffparaim.qmtools as qmt
 
 from ffparaim import utils
 from ffparaim.ffderiv import ForceFieldDerivation
+from openff.toolkit.topology import Molecule
 
 
 class AtomDB(ForceFieldDerivation):
@@ -14,7 +15,8 @@ class AtomDB(ForceFieldDerivation):
 
     def __init__(self, molecule, method, basis):
         super().__init__()
-        self.molecule = molecule
+        if isinstance(molecule, Molecule) is True:
+            self.molecule = molecule
         self.method = method
         self.basis = basis
 
@@ -41,7 +43,7 @@ class AtomDB(ForceFieldDerivation):
             qmt.exec_orca(cmd='uks')
             # Load data of electron density from molden file.
             iodata = self.load_data('orca_uks.molden.input')
-            # Set grid with 75 radial shells and 110 angular points per shell.
+            # Set grid with 150 radial shells and 194 angular points per shell.
             self.set_molgrid(iodata)
             # Apply MBIS electronic density partition method.
             self.do_partitioning(iodata, method='mbis')

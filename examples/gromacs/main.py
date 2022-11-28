@@ -21,7 +21,7 @@ def main():
     system = top.createSystem(nonbondedMethod=app.PME,
                               nonbondedCutoff=1 * unit.nanometer,
                               constraints=app.HBonds)
-    system.addForce(openmm.MonteCarloBarostat(1 * unit.bar, 298 * unit.kelvin))
+    system.addForce(openmm.MonteCarloBarostat(1 * unit.bar, 298.15 * unit.kelvin))
     nb_params = FFparAIM(qm_charge=0,
                          ligand_selection=':1',
                          n_updates=3,
