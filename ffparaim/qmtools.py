@@ -84,7 +84,7 @@ def write_orca_input(orca_inp,
         # Use polarization correction template.
         template = utils.orca_pol_corr_template
     # If ORCA run is an unrestricted Kohn-Sham DFT QM/MM calculation.
-    elif orca_inp is 'uks':
+    elif orca_inp == 'uks':
         # Define element for atom.
         fields["atom"] = atom
         # Use unrestricted Kohn-Sham DFT QM/MM calculation template.
