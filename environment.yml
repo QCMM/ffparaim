@@ -5,6 +5,7 @@ dependencies:
   - python=3.9
   - yank=0.25.2
   - openff-toolkit
+  - pip
   - pip:
     - git+https://github.com/theochem/iodata.git
     - git+https://github.com/theochem/grid.git
