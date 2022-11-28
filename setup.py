@@ -35,7 +35,7 @@ setup(
     # Handled automatically by setuptools. Use 'exclude' to prevent some specific
     # subpackage(s) from being added, if needed
     packages=['ffparaim',
-              'ffparaim.test',
+              'ffparaim.tests',
               'ffparaim.data'],
 
     # Optional include package data to ship with your package
