@@ -104,8 +104,7 @@ class ForceFieldDerivation(object):
             )
             print("Sum of charges: ", sum(self.pro_model.charges))
         else:
-            print('Invalid method')
-            return
+            raise ValueError('Invalid method')
         return self.results
 
     def get_charges(self):

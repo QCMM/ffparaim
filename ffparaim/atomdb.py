@@ -18,7 +18,7 @@ class AtomDB(ForceFieldDerivation):
         if isinstance(molecule, Molecule) is True:
             self.molecule = molecule
         else:
-            raise ValueError("Variable molecule must be an instance of openff.toolkit.topology.Molecule.")
+            raise ValueError("molecule must be an instance of openff.toolkit.topology.Molecule.")
         self.method = method
         self.basis = basis
 
