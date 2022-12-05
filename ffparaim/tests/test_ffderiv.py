@@ -56,7 +56,7 @@ def test_set_molgrid_invalid():
     with as_file(files('ffparaim.data').joinpath('orca_uks.molden.input')) as infile:
         data = ffd.load_data(infile)
     pytest.raises(TypeError, ffd.set_molgrid)
-    pytest.raises(TypeError, ffd.set_molgrid, 'data')
+    pytest.raises(AttributeError, ffd.set_molgrid, 'data')
     pytest.raises(TypeError, ffd.set_molgrid, data, nrad='150')
     pytest.raises(TypeError, ffd.set_molgrid, data, nang='194')
     pytest.raises(TypeError, ffd.set_molgrid, data, chunk_size='10000')
