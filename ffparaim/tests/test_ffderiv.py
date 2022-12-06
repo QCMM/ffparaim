@@ -14,9 +14,11 @@ from iodata import IOData
 from grid.molgrid import MolGrid
 from desnpart.vh import ProModel
 from grid.basegrid import Grid
+from openff.toolkit.topology import Molecule
 
 from importlib_resources import files, as_file
 from numpy.testing import assert_equal, assert_allclose
+from numpy.core._exceptions import UFuncTypeError
 
 
 def test_ffderiv():
@@ -99,3 +101,62 @@ def test_do_partitioning_invalid():
     pytest.raises(TypeError, ffd.do_partitioning, data, gtol='1e-8')
     pytest.raises(TypeError, ffd.do_partitioning, data, maxiter='1000')
     pytest.raises(TypeError, ffd.do_partitioning, data, density_cutoff='1e-10')
+
+
+def test_get_charges():
+    ffd = ffparaim.ForceFieldDerivation()
+    with as_file(files('ffparaim.data').joinpath('orca_uks.molden.input')) as infile:
+        data = ffd.load_data(infile)
+    ffd.set_molgrid(data)
+    ffd.do_partitioning(data)
+    assert_equal(ffd.get_charges(), np.array([-1.23994956e-05]))
+
+
+def test_get_epol():
+    ffd = ffparaim.ForceFieldDerivation()
+    with as_file(files('ffparaim.data').joinpath('orca_uks.molden.input')) as infile:
+        data = ffd.load_data(infile)
+    ffd.set_molgrid(data)
+    ffd.do_partitioning(data)
+    assert_equal(ffd.get_epol(), 5.438830183804583)
+
+
+def test_get_rcubed():
+    ffd = ffparaim.ForceFieldDerivation()
+    with as_file(files('ffparaim.data').joinpath('orca_uks.molden.input')) as infile:
+        data = ffd.load_data(infile)
+    ffd.set_molgrid(data)
+    ffd.do_partitioning(data)
+    assert_equal(ffd.get_charges(), np.array([5.17950988]))
+
+
+def test_normalize_atomic_charges():
+    mol = Molecule('C=O')
+    norm_atcharges = ffparaim.ffderiv.normalize_atomic_charges(mol, 0, np.array([-0.3, 1, -0.6, -0.5]))
+    assert_allclose(norm_atcharges, np.array([-0.2, 1.1, -0.5, -0.4]))
+
+
+def test_normalize_atomic_charges_invalid():
+    mol = Molecule('C=O')
+    pytest.raises(TypeError, ffparaim.ffderiv.normalize_atomic_charges)
+    pytest.raises(TypeError, ffparaim.ffderiv.normalize_atomic_charges, mol)
+    pytest.raises(TypeError, ffparaim.ffderiv.normalize_atomic_charges, mol, 0)
+    pytest.raises(AttributeError, ffparaim.ffderiv.normalize_atomic_charges, 'mol', 0, np.array([-0.3, 1, -0.6, -0.5]))
+    pytest.raises(UFuncTypeError, ffparaim.ffderiv.normalize_atomic_charges, mol, '0', np.array([-0.3, 1, -0.6, -0.5]))
+    pytest.raises(TypeError, ffparaim.ffderiv.normalize_atomic_charges, mol, 0, [-0.3, 1, -0.6, -0.5])
+
+
+def test_symmetrize():
+    mol = Molecule.from_smiles('C=O')
+    symm = ffparaim.ffderiv.symmetrize(mol, [0.5627, -0.5151, -0.0240, -0.0236])
+    assert isinstance(symm, list)
+    assert_allclose(symm, [0.5627, -0.5151, -0.0238, -0.0238])
+
+
+def test_symmetrize_invalid():
+    mol = Molecule.from_smiles('C=O')
+    pytest.raises(TypeError, ffparaim.ffderiv.symmetrize)
+    pytest.raises(TypeError, ffparaim.ffderiv.symmetrize, mol)
+    pytest.raises(AttributeError, ffparaim.ffderiv.symmetrize, 'mol', [0.5627, -0.5151, -0.0240, -0.0236])
+    pytest.raises(TypeError, ffparaim.ffderiv.symmetrize, mol, '[0.5627, -0.5151, -0.0240, -0.0236]')
+    pytest.raises(IndexError, ffparaim.ffderiv.symmetrize, mol, [0.5627, -0.5151, -0.0240])
