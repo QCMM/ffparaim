@@ -8,6 +8,8 @@ import os
 import pytest
 import filecmp
 import ffparaim
+import json
+
 import numpy as np
 
 from iodata import IOData
@@ -160,3 +162,28 @@ def test_symmetrize_invalid():
     pytest.raises(AttributeError, ffparaim.ffderiv.symmetrize, 'mol', [0.5627, -0.5151, -0.0240, -0.0236])
     pytest.raises(TypeError, ffparaim.ffderiv.symmetrize, mol, '[0.5627, -0.5151, -0.0240, -0.0236]')
     pytest.raises(IndexError, ffparaim.ffderiv.symmetrize, mol, [0.5627, -0.5151, -0.0240])
+
+
+def test_get_lj_params():
+    mol = Molecule.from_smiles('C=O')
+    with as_file(files('ffparaim.data').joinpath('rcubed_table.json')) as infile:
+        rcubed_table = {int(k): v for k, v in json.load(infile).items()}
+    sig, eps = ffparaim.ffderiv.get_lj_params(mol, np.array([1, 2, 3, 4]), rcubed_table)
+    assert_allclose(sig, [0.27003539347805483, 0.2842451596185054, 0.3395921721548409, 0.3538392956260175])
+    assert_allclose(eps, [0.06457184713591461, 0.16089255961492702, 0.4006858034641198, 0.5566613685093755])
+
+
+def test_get_lj_params_invalid():
+    mol = Molecule.from_smiles('C=O')
+    pytest.raises(TypeError, ffparaim.ffderiv.get_lj_params)
+    pytest.raises(TypeError, ffparaim.ffderiv.get_lj_params, mol)
+    pytest.raises(TypeError, ffparaim.ffderiv.get_lj_params, mol, np.array([1, 2, 3, 4]))
+    with as_file(files('ffparaim.data').joinpath('rcubed_table.json')) as infile:
+        rcubed_table = json.load(infile)
+    pytest.raises(KeyError, ffparaim.ffderiv.get_lj_params, mol, np.array([1, 2, 3, 4]), rcubed_table)
+    rcubed_table = {int(k): v for k, v in rcubed_table.items()}
+    pytest.raises(AttributeError, ffparaim.ffderiv.get_lj_params, 'mol', np.array([1, 2, 3, 4]), rcubed_table)
+    pytest.raises(TypeError, ffparaim.ffderiv.get_lj_params, mol, 'np.array([1, 2, 3, 4])', rcubed_table)
+    pytest.raises(TypeError, ffparaim.ffderiv.get_lj_params, mol, np.array([1, 2, 3, 4]), 'rcubed_table')
+    pytest.raises(KeyError, ffparaim.ffderiv.get_lj_params, mol, rcubed_table, np.array([1, 2, 3, 4]))
+
