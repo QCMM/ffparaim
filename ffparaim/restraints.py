@@ -56,7 +56,7 @@ def set_restraints(top,
         # If missing parameters are present.
         except RestraintParameterError:
             # Print message for choosing parameters.
-            print('Choosing restraint parameters automatically.')
+            print('Choosing equilibrium distance, angles and torsions automatically.')
             # Generate missing parameters for the restraint.
             restraint.determine_missing_parameters(thermodynamic_state, sampler_state, topography)
             # Create the restrained state.
