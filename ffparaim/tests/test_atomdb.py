@@ -5,9 +5,8 @@ Unit and regression test for the ffparaim package. Testing atomdb.py.
 # Import package, test suite, and other packages as needed
 import os
 import pytest
-# import filecmp
 import ffparaim
-
+# import filecmp
 
 from openff.toolkit.topology import Molecule
 

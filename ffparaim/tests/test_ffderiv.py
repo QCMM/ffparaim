@@ -3,10 +3,8 @@ Unit and regression test for the ffparaim package. Testing ffderiv.py.
 """
 
 # Import package, test suite, and other packages as needed
-import sys
-import os
+
 import pytest
-import filecmp
 import ffparaim
 import json
 
@@ -186,4 +184,3 @@ def test_get_lj_params_invalid():
     pytest.raises(TypeError, ffparaim.ffderiv.get_lj_params, mol, 'np.array([1, 2, 3, 4])', rcubed_table)
     pytest.raises(TypeError, ffparaim.ffderiv.get_lj_params, mol, np.array([1, 2, 3, 4]), 'rcubed_table')
     pytest.raises(KeyError, ffparaim.ffderiv.get_lj_params, mol, rcubed_table, np.array([1, 2, 3, 4]))
-

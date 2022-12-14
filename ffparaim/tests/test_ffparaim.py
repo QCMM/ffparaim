@@ -15,7 +15,7 @@ from openmm import System
 from openff.toolkit.topology import Molecule
 
 from importlib_resources import files, as_file
-from numpy.testing import assert_equal
+# from numpy.testing import assert_equal
 
 
 def test_ffparaim_imported():
@@ -40,8 +40,8 @@ def test_ffparaim():
 def test_ffparaim_prepare(tmpdir):
     os.chdir(tmpdir)
     ffp = ffparaim.FFparAIM()
-    with as_file(files('ffparaim.data').joinpath('solvent.pdb')) as pdb:
-        molecule, system_structure, system = ffp.prepare('c1ccc(cc1)O', str(pdb))
+    with as_file(files('ffparaim.data').joinpath('solvent.pdb')) as infile:
+        molecule, system_structure, system = ffp.prepare('c1ccc(cc1)O', str(infile))
     assert ffp.smiles == 'c1ccc(cc1)O'
     assert 'solvent.pdb' in ffp.pdb_file
     assert ffp.forcefield == 'openff_unconstrained-2.0.0.offxml'
@@ -55,10 +55,10 @@ def test_ffparaim_prepare(tmpdir):
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_ffparaim_prepare_invalid(tmpdir):
     ffp = ffparaim.FFparAIM()
-    with as_file(files('ffparaim.data').joinpath('solvent.pdb')) as pdb:
+    with as_file(files('ffparaim.data').joinpath('solvent.pdb')) as infile:
         pytest.raises(TypeError, ffp.prepare)
-        pytest.raises(TypeError, ffp.prepare, 1, str(pdb))
-        pytest.raises(ValueError, ffp.prepare, 'CO', str(pdb))
+        pytest.raises(TypeError, ffp.prepare, 1, str(infile))
+        pytest.raises(ValueError, ffp.prepare, 'CO', str(infile))
 
 
 '''@pytest.mark.filterwarnings("ignore::DeprecationWarning")
