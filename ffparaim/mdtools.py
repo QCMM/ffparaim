@@ -213,7 +213,7 @@ def setup_simulation(system_structure,
     simulation.context.setPositions(positions)
     # Energy minimization.
     simulation.minimizeEnergy()
-    return simulation
+    return system, simulation
 
 
 def get_positions(simulation):

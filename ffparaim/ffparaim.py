@@ -99,13 +99,13 @@ class FFparAIM(object):
             # Save snapshots in trajectory.
             frames = int(self.sampling_time * 500000 / self.total_qm_calculations)
             # Create an OpenMM simulation object.
-            simulation = mdt.setup_simulation(system_structure,
-                                              system,
-                                              positions,
-                                              update,
-                                              frames,
-                                              restraint_dict,
-                                              self.ligand_atom_list)
+            system, simulation = mdt.setup_simulation(system_structure,
+                                                      system,
+                                                      positions,
+                                                      update,
+                                                      frames,
+                                                      restraint_dict,
+                                                      self.ligand_atom_list)
             # Save serialized system.
             mdt.save_serialized_system(system, 'system.xml')
             # Write ORCA forcefield file.
