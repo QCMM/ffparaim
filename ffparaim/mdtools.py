@@ -187,11 +187,11 @@ def setup_simulation(system_structure,
 
     # Apply restraint force for complex simulations.
     if restraint_dict is not None:
-        set_restraints(system_structure.topology,
-                       system,
-                       positions,
-                       restraint_dict,
-                       ligand_atom_list)
+        system = set_restraints(system_structure.topology,
+                                system,
+                                positions,
+                                restraint_dict,
+                                ligand_atom_list)
     # Create an integrator instance.
     integrator = openmm.LangevinIntegrator(298.15 * unit.kelvin,
                                            1 / unit.picosecond,

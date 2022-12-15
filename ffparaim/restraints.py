@@ -62,4 +62,4 @@ def set_restraints(top,
             # Create the restrained state.
             restraint.restrain_state(thermodynamic_state)
 
-    return
+    return thermodynamic_state.get_system()
