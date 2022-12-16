@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from yank.restraints import Harmonic, FlatBottom, Boresch, RestraintParameterError
-from openmmtools import states
+from openmmtools import states, forces
 from yank.yank import Topography
 from simtk import unit
 
@@ -15,8 +15,10 @@ def set_restraints(top,
 
     # Print message for setting restraints.
     print('Setting restraints ...')
-    # If restraint dict is defined.
-    if restraint_dict is not None:
+    # Check for restraints added to the system.
+    restraint_force = forces.find_forces(system, r'\bFlatBottom|\bHarmonicRestraint|\bCustom', only_one=False)
+    # If restraint dict is defined and there is a restraint definition in system.
+    if restraint_dict is not None and len(restraint_force) == 0:
         # Create a state with the system at a reference temperature.
         thermodynamic_state = states.ThermodynamicState(system, 298.15 * unit.kelvin)
         # Extract coordinates from this state.
@@ -61,5 +63,6 @@ def set_restraints(top,
             restraint.determine_missing_parameters(thermodynamic_state, sampler_state, topography)
             # Create the restrained state.
             restraint.restrain_state(thermodynamic_state)
-
-    return thermodynamic_state.get_system()
+        return thermodynamic_state.get_system()
+    else:
+        return system
