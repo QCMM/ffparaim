@@ -10,6 +10,8 @@ import filecmp
 import ffparaim.mdtools as mdt
 
 from openff.toolkit.topology import Molecule
+from openff.toolkit.typing.engines.smirnoff import ForceField
+from parmed.structure import Structure
 from importlib_resources import files, as_file
 from numpy.testing import assert_equal, assert_allclose
 
@@ -43,3 +45,29 @@ def test_define_molecule_invalid():
     pytest.raises(OSError, mdt.define_molecule, 'CO', 'lig.pdb')
     with as_file(files('ffparaim.data').joinpath('lig.pdb')) as infile:
         pytest.raises(ValueError, mdt.define_molecule, 'CO', infile)
+
+
+def test_define_forcefield():
+    ff = mdt.define_forcefield('openff_unconstrained-2.0.0.offxml')
+    assert isinstance(ForceField, ff)
+
+
+def test_define_forcefield_invalid():
+    pytest.raises(TypeError, mdt.define_forcefield)
+    pytest.raises(OSError, mdt.define_forcefield, 'test')
+
+
+def test_prepare_ligand(tmpdir):
+    os.chdir(tmpdir)
+    molecule = mdt.define_molecule('c1ccc(cc1)O')
+    forcefield = mdt.define_forcefield('openff_unconstrained-2.0.0.offxml')
+    lig_structure = mdt.prepare_ligand(molecule, forcefield)
+    assert isinstance(Structure, lig_structure)
+
+
+def test_prepare_ligand_invalid(tmpdir):
+    pytest.raises(TypeError, mdt.prepare_ligand)
+    molecule = mdt.define_molecule('c1ccc(cc1)O')
+    pytest.raises(TypeError, mdt.prepare_ligand, molecule)
+    forcefield = mdt.define_forcefield('openff_unconstrained-2.0.0.offxml')
+    pytest.raises(FileNotFoundError, mdt.prepare_ligand, molecule, forcefield)
