@@ -11,9 +11,10 @@ def to_pickle(data):
     """Write MBIS partitioning data to .pkl file."""
 
     # Open .pkl file.
-    with open('ffparaim.pickle', 'wb') as outfile:
-        # Write data to file.
-        pickle.dump(data, outfile)
+    if isinstance(data, dict) is True:
+        with open('ffparaim.pickle', 'wb') as outfile:
+            # Write data to file.
+            pickle.dump(data, outfile)
 
 
 def to_csv(lig_structure,

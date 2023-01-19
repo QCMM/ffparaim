@@ -44,7 +44,7 @@ def test_define_molecule(tmpdir):
     with as_file(files('ffparaim.data').joinpath('solvent.pdb')) as infile:
         mdt.separate_components(infile, ':MOL')
     mol = mdt.define_molecule('c1ccc(cc1)O')
-    assert isinstance(Molecule, mol)
+    assert isinstance(Molecule, mol) is True
 
 
 def test_define_molecule_invalid():
@@ -69,7 +69,7 @@ def test_prepare_ligand():
     forcefield = mdt.define_forcefield('openff_unconstrained-2.0.0.offxml')
     with as_file(files('ffparaim.data').joinpath('lig.pdb')) as lig_pdb_file:
         lig_structure = mdt.prepare_ligand(molecule, forcefield, lig_pdb_file)
-    assert isinstance(Structure, lig_structure)
+    assert isinstance(Structure, lig_structure) is True
 
 
 def test_prepare_ligand_invalid():
@@ -93,7 +93,7 @@ def test_prepare_environment():
     ff_env = ['amber14-all.xml', 'amber14/tip3p.xml']
     with as_file(files('ffparaim.data').joinpath('env.pdb')) as env_pdb_file:
         env_structure = mdt.prepare_enviroment(ff_env, env_pdb_file)
-    assert isinstance(Structure, env_structure)
+    assert isinstance(Structure, env_structure) is True
 
 
 def test_prepare_environment_invalid():
