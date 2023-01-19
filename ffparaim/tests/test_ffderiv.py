@@ -12,7 +12,7 @@ import numpy as np
 
 from iodata import IOData
 from grid.molgrid import MolGrid
-from desnpart.vh import ProModel
+from denspart.vh import ProModel
 from grid.basegrid import Grid
 from openff.toolkit.topology import Molecule
 

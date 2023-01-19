@@ -45,8 +45,10 @@ def test_ffparaim_prepare(tmpdir):
     assert ffp.smiles == 'c1ccc(cc1)O'
     assert 'solvent.pdb' in ffp.pdb_file
     assert ffp.forcefield == 'openff_unconstrained-2.0.0.offxml'
-    assert filecmp.cmp(os.path.join(tmpdir, 'env.pdb'), files('ffparaim.data').joinpath('env.pdb')) == 0
-    assert filecmp.cmp(os.path.join(tmpdir, 'lig.pdb'), files('ffparaim.data').joinpath('lig.pdb')) == 0
+    assert filecmp.cmp(os.path.join(tmpdir, 'env.pdb'),
+                       files('ffparaim.data').joinpath('env.pdb')) == 0
+    assert filecmp.cmp(os.path.join(tmpdir, 'lig.pdb'),
+                       files('ffparaim.data').joinpath('lig.pdb')) == 0
     assert isinstance(molecule, Molecule) is True
     assert isinstance(system_structure, Structure) is True
     assert isinstance(system, System) is True

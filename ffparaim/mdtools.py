@@ -29,7 +29,6 @@ def separate_components(pdb_file,
     pmd.write_PDB(pdb[ligand_selection], 'lig.pdb')
     # Write PDB file for molecular environment.
     pmd.write_PDB(pdb[f'!{ligand_selection}'], 'env.pdb')
-    return
 
 
 def define_molecule(smiles,
@@ -124,7 +123,6 @@ def save_serialized_system(system,
     # Save XML file.
     with open(xml_file, 'w') as f:
         f.write(system_serialized)
-    return
 
 
 def create_smirks_dict(molecule,
@@ -172,7 +170,6 @@ def save_forcefield(off_ff,
         vdw_handler.epsilon = round(eps, 6) * unit.kilojoule_per_mole
     # Save offxml file.
     off_ff.to_file(outfile)
-    return
 
 
 def setup_simulation(system_structure,
@@ -293,11 +290,11 @@ def update_params(system,
         if force.getName() == 'NonbondedForce':
             # Iterate for every atom index in the list.
             for i, idx in enumerate(ligand_atoms_idx):
-                # Get atomic charge value from OpenSystem object or from MBIS partitioning.
+                # Get atomic charge value from OpenMM System object or from MBIS partitioning.
                 q = force.getParticleParameters(idx)[0] if charge is None else round(charge[i], 6)
-                # Get sigma value from OpenSystem object or from MBIS partitioning.
+                # Get sigma value from OpenMM System object or from MBIS partitioning.
                 sig = force.getParticleParameters(idx)[1] if sigma is None else round(sigma[i], 6)
-                # Get epsilon value from OpenSystem object or from MBIS partitioning.
+                # Get epsilon value from OpenMM System object or from MBIS partitioning.
                 eps = force.getParticleParameters(idx)[2] if epsilon is None else round(epsilon[i], 6)
                 # Replace parameters in system.
                 force.setParticleParameters(idx, charge=q, sigma=sig, epsilon=eps)
