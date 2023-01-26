@@ -20,12 +20,12 @@ def set_qm_atoms(ligand_selection, pdb_file='output_recenter.pdb'):
     # Create a list for atom selection.
     lig_atoms = pdb[ligand_selection].atoms
     # Create a list of atom indices based on the full atom list order.
-    lig_list = [idx for at in lig_atoms for idx, atom in enumerate(atom_list)
-                if (at.xx, at.xy, at.xz) == (atom.xx, atom.xy, atom.xz)]
-    return lig_list
+    lig_atoms_idx = [idx for at in lig_atoms for idx, atom in enumerate(atom_list)
+                     if (at.xx, at.xy, at.xz) == (atom.xx, atom.xy, atom.xz)]
+    return lig_atoms_idx
 
 
-def write_qmmm_pdb(lig_list, pdb_file='output_recenter.pdb'):
+def write_qmmm_pdb(lig_atoms_idx, pdb_file='output_recenter.pdb'):
     """Write a PDB File with B-factor and occupancy columns compatible with
     ORCA QM/MM calculation."""
 
@@ -36,7 +36,7 @@ def write_qmmm_pdb(lig_list, pdb_file='output_recenter.pdb'):
         # Replace B-factor values for all atoms.
         atom.bfactor = 0
         # Replace occupancy values for atom in QM region, based on ligand'sselection.
-        atom.occupancy = 1.0 if atom.idx in lig_list else 0
+        atom.occupancy = 1.0 if atom.idx in lig_atoms_idx else 0
     # Write modified PDB file.
     pdb.write_pdb('output_qmmm.pdb')
 

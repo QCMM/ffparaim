@@ -172,14 +172,14 @@ class FFparAIM(object):
             print('Updating parameters in forcefield ...')
             if charges:
                 sig, eps = None, None
-                new_atcharges = stats.nb_stats(self.data[update], charges=True)[0]
+                new_atcharges = stats.nb_stats(self.data[update], 'charges')[0]
                 if symm:
                     atcharges = symmetrize(molecule, new_atcharges)
                     norm_atcharges = normalize_atomic_charges(molecule,
                                                               self.qm_charge,
                                                               atcharges)
             if lj:
-                new_rcubed = stats.nb_stats(self.data[update], rcubed=True)[0]
+                new_rcubed = stats.nb_stats(self.data[update], 'rcubed')[0]
                 if symm:
                     new_rcubed = symmetrize(molecule, new_rcubed)
                 sig, eps = get_lj_params(molecule,

@@ -1,0 +1,9 @@
+! QMMM B3LYP def2-TZVP DEFGRID3 TightSCF KeepDens
+%output PrintLevel Mini Print[ P_Mulliken ] 1 Print[P_AtCharges_M] 1 end
+%pal nprocs 1 end
+%qmmm
+    ORCAFFFilename "system.ORCAFF.prms"
+    Use_QM_InfoFromPDB true     # get QM atoms from pdb file
+end
+*pdbfile 0 1 output_qmmm.pdb
+

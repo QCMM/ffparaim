@@ -2,11 +2,9 @@
 import numpy as np
 
 
-def nb_stats(data, charges=False, rcubed=False):
+def nb_stats(data, param):
     """Obtain the arimetic mean and standard deviation for non-bonded parameters."""
 
-    # Assign respective value if correspond to atomic charges or effective volume.
-    param = 'rcubed' if rcubed else 'charges'
     # Create an array for non-bonded parameters data of all updates.
     params = np.array([data_update.atffparams[param] for data_update in data])
     # Calculate arimetic mean and standard deviation.
