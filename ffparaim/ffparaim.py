@@ -44,6 +44,12 @@ class FFparAIM(object):
         self.basis = basis
         # Data dict to store non-bonded parameters per update.
         self.data = dict()
+        # SMILES string of the molecule to derive non-bonded parameters.
+        self.smiles = None
+        # PDB file of the complete system.
+        self.pdb_file = None
+        # Small molecule force field.
+        self.forcefield = None
 
     def prepare(self,
                 smiles,
