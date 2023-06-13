@@ -169,6 +169,7 @@ def save_forcefield(off_ff,
         vdw_handler.rmin_half = round(rmin_h, 6) * unit.nanometer
         vdw_handler.epsilon = round(eps, 6) * unit.kilojoule_per_mole
     # Save offxml file.
+    off_ff.get_parameter_handler('Electrostatics').periodic_potential = 'PME'
     off_ff.to_file(outfile)
 
 
