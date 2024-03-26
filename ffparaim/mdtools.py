@@ -12,6 +12,7 @@ from openmm import app
 from openmm import unit
 from openff.toolkit.topology import Molecule, Topology
 from openff.toolkit.typing.engines.smirnoff import ForceField
+from openff.toolkit.typing.engines.smirnoff.parameters import LibraryChargeHandler
 from rdkit.Chem import AllChem, AddHs
 
 # Avoid warnings.
@@ -125,10 +126,23 @@ def save_serialized_system(system,
         f.write(system_serialized)
 
 
-def create_smirks_dict(molecule,
-                       off_ff,
-                       sig,
-                       eps):
+def prepare_off_charges(molecule,
+                        ff,
+                        charges):
+    """Include molecule's partial charges with normalized D-MBIS atomic charges on
+    OpenForceField force field object using LibraryCharges."""
+
+    off_ff = ForceField(ff)
+    molecule.partial_charges = charges * unit.elementary_charge
+    library_charge_type = LibraryChargeHandler.LibraryChargeType.from_molecule(molecule)
+    off_ff["LibraryCharges"].add_parameter(parameter=library_charge_type)
+    return off_ff
+
+
+def prepare_off_lj(molecule,
+                   off_ff,
+                   sig,
+                   eps):
     """Generate a SMIRKS-based dictionary that contains sigma and epsilon
     Lennard-Jones parameters for every pattern in the molecule."""
 
@@ -152,22 +166,23 @@ def create_smirks_dict(molecule,
 
 
 def save_forcefield(off_ff,
-                    smirks_dict,
-                    outfile):
+                    smirks_dict=None,
+                    outfile='d-mbis.offxml'):
     """Save a modified version of OpenForceField force field object with derived
     parameters."""
 
-    # Replace Lennard-Jones parameters for every SMIRKS.
-    for pattern in smirks_dict.keys():
-        # Rmin / 2.
-        rmin_h = (np.array(smirks_dict[pattern]['sigma']).mean()) / (2 ** (5.0 / 6.0))
-        # Epsilon.
-        eps = np.array(smirks_dict[pattern]['epsilon']).mean()
-        # Define the new Lennard-Jones parameters for pattern.
-        vdw_handler = off_ff["vdW"].parameters[pattern]
-        # Replace Rmin / 2 and epsilon values.
-        vdw_handler.rmin_half = round(rmin_h, 6) * unit.nanometer
-        vdw_handler.epsilon = round(eps, 6) * unit.kilojoule_per_mole
+    if smirks_dict is not None:
+        # Replace Lennard-Jones parameters for every SMIRKS.
+        for pattern in smirks_dict.keys():
+            # Rmin / 2.
+            rmin_h = (np.array(smirks_dict[pattern]['sigma']).mean()) / (2 ** (5.0 / 6.0))
+            # Epsilon.
+            eps = np.array(smirks_dict[pattern]['epsilon']).mean()
+            # Define the new Lennard-Jones parameters for pattern.
+            vdw_handler = off_ff["vdW"].parameters[pattern]
+            # Replace Rmin / 2 and epsilon values.
+            vdw_handler.rmin_half = round(rmin_h, 6) * unit.nanometer
+            vdw_handler.epsilon = round(eps, 6) * unit.kilojoule_per_mole
     # Save offxml file.
     off_ff.get_parameter_handler('Electrostatics').periodic_potential = 'PME'
     off_ff.to_file(outfile)
