@@ -70,7 +70,7 @@ def prepare_ligand(molecule,
     # Fix connect records.
     fix_conect(lig_pdb_file)
     # Read ligand PDB file.
-    lig_pdb = pmd.formats.pdb.PDBFile(lig_pdb_file)
+    lig_pdb = pmd.formats.pdb.PDBFile.parse(lig_pdb_file)
     # Create ligand topology.
     off_topology = Topology.from_mdtraj(mdtraj.load_pdb(lig_pdb_file).topology,
                                         unique_molecules=[molecule])
