@@ -4,6 +4,7 @@ import mdtraj
 import sys
 
 import parmed as pmd
+import pytraj
 import numpy as np
 
 from ffparaim.restraints import set_restraints
@@ -25,11 +26,16 @@ def separate_components(pdb_file,
     input."""
 
     # Load PDB input file.
-    pdb = pmd.load_file(pdb_file)
+    pdb = pmd.formats.pdb.PDBFile.parse(pdb_file)
     # Write PDB file for ligand only.
-    pmd.write_PDB(pdb[ligand_selection], 'lig.pdb')
+    pdb[ligand_selection].write_pdb('lig.pdb')
     # Write PDB file for molecular environment.
-    pmd.write_PDB(pdb[f'!{ligand_selection}'], 'env.pdb')
+    pdb[f'!{ligand_selection}'].write_pdb('env.pdb')
+
+
+def fix_conect(lig_pdb_file='lig.pdb'):
+    lig = pytraj.load(lig_pdb_file)
+    lig.save('lig.pdb', options='pdbv3')
 
 
 def define_molecule(smiles,
@@ -61,10 +67,12 @@ def prepare_ligand(molecule,
     opeff-toolkit Molecule and ForceField object with a PDB file of the
     protonated ligand.."""
 
+    # Fix connect records.
+    fix_conect(lig_pdb_file)
     # Read ligand PDB file.
-    lig_pdb = pmd.load_file(lig_pdb_file)
+    lig_pdb = pmd.formats.pdb.PDBFile(lig_pdb_file)
     # Create ligand topology.
-    off_topology = Topology.from_openmm(openmm_topology=lig_pdb.topology,
+    off_topology = Topology.from_mdtraj(mdtraj.load_pdb(lig_pdb_file).topology,
                                         unique_molecules=[molecule])
     # Create OpenMM System object for the ligand.
     lig_system = forcefield.create_openmm_system(off_topology)
