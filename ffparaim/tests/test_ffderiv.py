@@ -63,7 +63,7 @@ def test_set_molgrid_invalid():
     pytest.raises(TypeError, ffd.set_molgrid)
     pytest.raises(AttributeError, ffd.set_molgrid, 'data')
     pytest.raises(TypeError, ffd.set_molgrid, data, nrad='150')
-    pytest.raises(TypeError, ffd.set_molgrid, data, nang='194')
+    pytest.raises(ValueError, ffd.set_molgrid, data, nang='194')
     pytest.raises(TypeError, ffd.set_molgrid, data, chunk_size='10000')
     pytest.raises(TypeError, ffd.set_molgrid, data, gradient='False')
     pytest.raises(TypeError, ffd.set_molgrid, data, orbitals='False')
