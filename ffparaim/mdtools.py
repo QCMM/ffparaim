@@ -70,16 +70,16 @@ def prepare_ligand(molecule,
     # Fix connect records.
     fix_conect(lig_pdb_file)
     # Read ligand PDB file.
-    lig_pdb = pmd.formats.pdb.PDBFile.parse(lig_pdb_file)
+    lig_pdb = app.PDBFile(lig_pdb_file)
     # Create ligand topology.
-    off_topology = Topology.from_mdtraj(mdtraj.load_pdb(lig_pdb_file).topology,
+    off_topology = Topology.from_openmm(lig_pdb.getTopology(),
                                         unique_molecules=[molecule])
     # Create OpenMM System object for the ligand.
     lig_system = forcefield.create_openmm_system(off_topology)
     # Create ligand parametrized ParmEd Structure object.
-    lig_structure = pmd.openmm.load_topology(lig_pdb.topology,
+    lig_structure = pmd.openmm.load_topology(lig_pdb.getTopology(),
                                              lig_system,
-                                             xyz=lig_pdb.positions)
+                                             xyz=lig_pdb.getPositions())
     return lig_structure
 
 
