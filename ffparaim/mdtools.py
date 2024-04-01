@@ -26,7 +26,7 @@ def separate_components(pdb_file,
     input."""
 
     # Load PDB input file.
-    pdb = pmd.formats.pdb.PDBFile.parse(pdb_file)
+    pdb = pmd.load_file(pdb_file)
     # Write PDB file for ligand only.
     pdb[ligand_selection].write_pdb('lig.pdb')
     # Write PDB file for molecular environment.
@@ -43,6 +43,8 @@ def define_molecule(smiles,
     """Create an openff-toolkit Molecule object from a RDKit template using a
     SMILES string and a PDB file of the protonated ligand."""
 
+    # Fix CONNECT records.
+    fix_conect(lig_pdb_file)
     # Create RDKit template from SMILES.
     template = AllChem.MolFromSmiles(smiles)
     # Add hydrogens.
@@ -67,8 +69,6 @@ def prepare_ligand(molecule,
     opeff-toolkit Molecule and ForceField object with a PDB file of the
     protonated ligand.."""
 
-    # Fix connect records.
-    fix_conect(lig_pdb_file)
     # Read ligand PDB file.
     lig_pdb = app.PDBFile(lig_pdb_file)
     # Create ligand topology.
