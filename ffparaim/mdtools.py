@@ -11,6 +11,7 @@ from ffparaim.restraints import set_restraints
 from openmm import openmm
 from openmm import app
 from openmm import unit
+from openff import units
 from openff.toolkit.topology import Molecule, Topology
 from openff.toolkit.typing.engines.smirnoff import ForceField
 from openff.toolkit.typing.engines.smirnoff.parameters import LibraryChargeHandler
@@ -141,7 +142,7 @@ def prepare_off_charges(molecule,
     OpenForceField force field object using LibraryCharges."""
 
     off_ff = ForceField(ff)
-    molecule.partial_charges = charges * unit.elementary_charge
+    molecule.partial_charges = charges * units.unit.elementary_charge
     library_charge_type = LibraryChargeHandler.LibraryChargeType.from_molecule(molecule)
     off_ff["LibraryCharges"].add_parameter(parameter=library_charge_type)
     return off_ff
