@@ -199,7 +199,7 @@ class FFparAIM(object):
             # Save serialized system.
             mdt.save_serialized_system(system, 'system.xml')
         if off:
-            off_ff = mdt.prepare_off_charges(molecule, self.forcefield, charges)
+            off_ff = mdt.prepare_off_charges(molecule, self.forcefield, norm_atcharges)
             if lj:
                 smirks_dict = mdt.prepare_off_lj(molecule, off_ff, sig, eps)
             mdt.save_forcefield(off_ff, smirks_dict, outfile=f'd-mbis_{self.forcefield}')
