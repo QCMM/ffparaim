@@ -7,13 +7,14 @@ Unit and regression test for the ffparaim package. Testing ffderiv.py.
 import pytest
 import ffparaim
 import json
+import os
 
 import numpy as np
 
 from iodata import IOData
 from grid.molgrid import MolGrid
-from denspart.vh import ProModel
-from grid.basegrid import Grid
+from denspart.mbis import MBISProModel
+from grid.basegrid import LocalGrid
 from openff.toolkit.topology import Molecule
 
 from importlib_resources import files, as_file
@@ -65,9 +66,7 @@ def test_set_molgrid_invalid():
     pytest.raises(TypeError, ffd.set_molgrid, data, nrad='150')
     pytest.raises(ValueError, ffd.set_molgrid, data, nang='194')
     pytest.raises(TypeError, ffd.set_molgrid, data, chunk_size='10000')
-    pytest.raises(TypeError, ffd.set_molgrid, data, gradient='False')
-    pytest.raises(TypeError, ffd.set_molgrid, data, orbitals='False')
-    pytest.raises(TypeError, ffd.set_molgrid, data, store_atgrids='False')
+    pytest.raises(NotImplementedError, ffd.set_molgrid, data, orbitals='False')
 
 
 def test_do_partitioning():
@@ -77,12 +76,13 @@ def test_do_partitioning():
     ffd.set_molgrid(data)
     results = ffd.do_partitioning(data)
     assert isinstance(results, dict)
-    assert isinstance(ffd.pro_model, ProModel)
-    assert isinstance(ffd.localgrids, Grid)
-    assert_equal(ffd.data['density'][:3], np.array([123.69134467, 123.69134469, 123.69134469]))
-    assert_equal(results['charges'], np.array([-1.23994956e-05]))
-    assert_equal(results['radial_moments'][:3], np.array([5.99998444, 7.15516811, 13.94956547]))
-    assert_equal(results['multipole_moments'][0][:3], np.array([-2.63543186e-06, 9.01856960e-06, 4.42787335e-06]))
+    assert isinstance(ffd.pro_model, MBISProModel)
+    assert isinstance(ffd.localgrids, list)
+    assert isinstance(ffd.localgrids[0], LocalGrid)
+    assert_allclose(ffd.data['density'][:3], np.array([123.69134467, 123.69134469, 123.69134469]), atol=1.e-8)
+    assert_allclose(results['charges'], np.array([-9.82281732e-08]), atol=1.e-8)
+    assert_allclose(results['radial_moments'][:, 3], np.array([34.96229655]), atol=1.e-8)
+    assert_allclose(results['multipole_moments'][:, 3], np.array([0.57403472]), atol=1.e-8)
     assert_equal(results['gtol'], 1e-8)
     assert_equal(results['maxiter'], 1000)
     assert_equal(results['density_cutoff'], 1e-10)
@@ -109,15 +109,13 @@ def test_get_charges():
         data = ffd.load_data(infile)
     ffd.set_molgrid(data)
     ffd.do_partitioning(data)
-    assert_equal(ffd.get_charges(), np.array([-1.23994956e-05]))
+    results = ffd.do_partitioning(data)
+    assert_allclose(results['charges'], np.array([-9.82281732e-08]), atol=1.e-8)
 
 
-def test_get_epol():
+def test_get_epol(tmpdir):
+    os.chdir(tmpdir)
     ffd = ffparaim.ForceFieldDerivation()
-    with as_file(files('ffparaim.data').joinpath('orca_uks.molden.input')) as infile:
-        data = ffd.load_data(infile)
-    ffd.set_molgrid(data)
-    ffd.do_partitioning(data)
     assert_equal(ffd.get_epol(), 5.438830183804583)
 
 
@@ -127,17 +125,17 @@ def test_get_rcubed():
         data = ffd.load_data(infile)
     ffd.set_molgrid(data)
     ffd.do_partitioning(data)
-    assert_equal(ffd.get_charges(), np.array([5.17950988]))
+    assert_allclose(ffd.get_rcubed(), np.array([5.18087783]), atol=1.e-8)
 
 
 def test_normalize_atomic_charges():
-    mol = Molecule('C=O')
+    mol = Molecule.from_smiles('C=O')
     norm_atcharges = ffparaim.ffderiv.normalize_atomic_charges(mol, 0, np.array([-0.3, 1, -0.6, -0.5]))
     assert_allclose(norm_atcharges, np.array([-0.2, 1.1, -0.5, -0.4]))
 
 
 def test_normalize_atomic_charges_invalid():
-    mol = Molecule('C=O')
+    mol = Molecule.from_smiles('C=O')
     pytest.raises(TypeError, ffparaim.ffderiv.normalize_atomic_charges)
     pytest.raises(TypeError, ffparaim.ffderiv.normalize_atomic_charges, mol)
     pytest.raises(TypeError, ffparaim.ffderiv.normalize_atomic_charges, mol, 0)

@@ -161,19 +161,23 @@ class FFparAIM(object):
                 ffderiv = ForceFieldDerivation()
                 iodata = ffderiv.load_data('orca_qmmm.molden.input')
                 ffderiv.set_molgrid(iodata)
-                ffderiv.do_partitioning(iodata, method='mbis')
-                # Get data.
-                charge = ffderiv.get_charges()
-                rcubed = ffderiv.get_rcubed()
-                if exhaustive:
-                    epol = ffderiv.get_epol()
-                else:
-                    epol = ffderiv.get_epol() if update + 1 == self.n_updates else None
-                # Store data.
-                iodata.atffparams = {'charges': charge.tolist(),
-                                     'rcubed': rcubed.tolist()}
-                iodata.extra = {'epol': epol}
-                self.data[update].append(iodata)
+                try:
+                    ffderiv.do_partitioning(iodata, method='mbis')
+                    # Get data.
+                    charge = ffderiv.get_charges()
+                    rcubed = ffderiv.get_rcubed()
+                    if exhaustive:
+                        epol = ffderiv.get_epol()
+                    else:
+                        epol = ffderiv.get_epol() if update + 1 == self.n_updates else None
+                    # Store data.
+                    iodata.atffparams = {'charges': charge.tolist(),
+                                         'rcubed': rcubed.tolist()}
+                    iodata.extra = {'epol': epol}
+                    self.data[update].append(iodata)
+                except ValueError:
+                    print('Encountered non-finite gradient. Please report this issue on https://github.com/theochem/denspart/issues.')
+                    print('Skipping configuration ...')
             # Update parameters.
             print('Updating parameters in forcefield ...')
             if charges:
