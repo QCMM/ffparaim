@@ -144,7 +144,7 @@ def prepare_off_charges(molecule,
     off_ff = ForceField(ff)
     molecule.partial_charges = charges * units.unit.elementary_charge
     library_charge_type = LibraryChargeHandler.LibraryChargeType.from_molecule(molecule)
-    off_ff["LibraryCharges"].add_parameter(parameter=library_charge_type)
+    off_ff["LibraryCharges"].add_parameter(parameter=library_charge_type, allow_duplicate_smirks=True)
     return off_ff
 
 
