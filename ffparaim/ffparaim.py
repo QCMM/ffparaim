@@ -203,6 +203,7 @@ class FFparAIM(object):
             # Save serialized system.
             mdt.save_serialized_system(system, 'system.xml')
         if off:
+            smirks_dict = None
             off_ff = mdt.prepare_off_charges(molecule, self.forcefield, norm_atcharges)
             if lj:
                 smirks_dict = mdt.prepare_off_lj(molecule, off_ff, sig, eps)
