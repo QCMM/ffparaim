@@ -2,22 +2,22 @@
 
 from ffparaim import FFparAIM
 
-pdb_file = 'complex.pdb'
 smiles = 'c1ccc(cc1)O'
-restraint = {'boresch': {'receptor': [1829, 1737, 1607], 'ligand': [2, 3, 5]}}
+pdb_file = 'complex.pdb'
+restraint = {'harmonic': {'receptor': 'protein', 'ligand': 'resname LIG'}}
 
 
 # Script for non-bonded parameters derivation.
 def main():
-
     nb_params = FFparAIM(qm_charge=0,
-                         ligand_selection=':MOL',
+                         ligand_selection=' resname MOL',
                          n_updates=3,
                          sampling_time=0.5,
                          total_qm_calculations=3,
                          method='PBE')
-    molecule, system_structure, system = nb_params.prepare(smiles, pdb_file)
+    molecule, lig_structure, system_structure, system = nb_params.prepare(smiles, pdb_file)
     nb_params.run(molecule,
+                  lig_structure,
                   system_structure,
                   system,
                   restraint_dict=restraint,

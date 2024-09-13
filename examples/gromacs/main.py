@@ -13,6 +13,7 @@ from openff.toolkit.topology import Molecule
 def main():
     # Create main objects for protocol.
     molecule = Molecule('mobley_20524.sdf')
+    lig_structure = load_file('mobley_20524.sdf')
     top = load_file('mobley_20524.top')
     gro = load_file('mobley_20524.gro')
     top.box = gro.box
@@ -23,12 +24,13 @@ def main():
                               constraints=app.HBonds)
     system.addForce(openmm.MonteCarloBarostat(1 * unit.bar, 298.15 * unit.kelvin))
     nb_params = FFparAIM(qm_charge=0,
-                         ligand_selection=':1',
+                         ligand_selection='resname MOL',
                          n_updates=3,
                          sampling_time=0.5,
                          total_qm_calculations=3,
                          method='PBE')
     nb_params.run(molecule,
+                  lig_structure,
                   system_structure,
                   system,
                   charges=True,
