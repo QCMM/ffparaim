@@ -67,7 +67,7 @@ def write_orca_input(orca_inp,
         # Read PDB file.
         pdb = mdtraj.load(pdb_file)
         # Extract coordinates for ligand in angstrom.
-        coords = pdb.atom_slice(pdb.top.select(ligand_selection)).xyz * 10
+        coords = pdb.atom_slice(pdb.top.select(ligand_selection)).xyz[0] * 10
         # Generate a list with every element in the ligand.
         atoms = [atom.element.symbol for atom in pdb.atom_slice(pdb.top.select(ligand_selection)).top.atoms]
         # Iterate over every atom elements and coordinates.
