@@ -111,8 +111,7 @@ class FFparAIM(object):
                                                       positions,
                                                       update,
                                                       frames,
-                                                      restraint_dict,
-                                                      self.ligand_atom_list)
+                                                      restraint_dict)
             # Save serialized system.
             mdt.save_serialized_system(system, 'system.xml')
             # Write ORCA forcefield file.
