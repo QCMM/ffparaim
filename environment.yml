@@ -3,6 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - openff-toolkit
+  - openmmtools
   - pip
   - pip:
     - git+https://github.com/theochem/iodata.git
