@@ -285,16 +285,13 @@ def image_molecule(pdbfile='output.pdb'):
 
 
 def get_atoms_idx(system_structure,
-                  residue_selection):
+                  sel):
     """Generate an atom index lists for a residue selection."""
 
-    # Generate an atom atom list for entire system.
-    atom_list = system_structure.atoms
-    # Generate a residue list for selection.
-    res = system_structure[residue_selection].atoms
-    # Map atom ids for selected residues.
-    atoms_idx = [idx for at in res for idx, atom in enumerate(atom_list) if (
-        at.residue.number, at.name) == (atom.residue.number, atom.name)]
+    # Load PDB input file.
+    top = mdtraj.Topology.from_openmm(system_structure.topology)
+    # Get atom indexes for selection.
+    atoms_idx = list(top.select(sel))
     return atoms_idx
 
 

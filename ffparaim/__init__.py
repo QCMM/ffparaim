@@ -1,11 +1,9 @@
 # __init__.py
 
-# Add imports here
-from .ffparaim import *
+try:
+    from ._version import __version__, __version_tuple__
+except ImportError:
+    __version__ = "0.0.0.post0"
+    __version_tuple__ = (0, 0, 0, "a-dev")
 
-# Handle versioneer
-from ._version import get_versions
-versions = get_versions()
-__version__ = versions['version']
-__git_revision__ = versions['full-revisionid']
-del get_versions, versions
+from .ffparaim import FFparAIM
