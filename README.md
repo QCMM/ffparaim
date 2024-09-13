@@ -17,9 +17,8 @@ Required dependencies:
 - qc-iodata: https://github.com/theochem/iodata
 - qc-gbasis: https://github.com/theochem/gbasis
 
-Install (with dependencies):
+### Install (with dependencies):
 
-.. code-block:: bash
 
     conda env create -n ffp -f environment.yml
     conda activate ffp
