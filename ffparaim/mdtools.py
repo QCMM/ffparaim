@@ -261,27 +261,13 @@ def image_molecule(pdbfile='output.pdb'):
     traj = mdtraj.load(pdbfile)
     # Apply system recenter.
     try:
-        traj.image_molecules()
+        traj = traj.image_molecules()
     # If is it not possible, use first molecule of the system as reference.
     except ValueError:
-        traj.image_molecules(anchor_molecules=[traj.top.find_molecules()[0]],
-                             other_molecules=traj.top.find_molecules()[1:])
-    # Transform positions in compatible units for PDB writing.
-    pos = mdtraj.utils.in_units_of(traj.xyz[0],
-                                   traj._distance_unit,
-                                   "angstroms")
-    # Same for unit cell vectors.
-    ucl = mdtraj.utils.in_units_of(traj.unitcell_lengths[0],
-                                   traj._distance_unit,
-                                   "angstroms")
-    # Create PDBTrajectoryFile object.
-    pdb_recentered = mdtraj.formats.PDBTrajectoryFile("output_recenter.pdb", "w")
-    # Write coordinates and box vectors to PDB file.
-    pdb_recentered.write(pos,
-                         traj.top,
-                         modelIndex=None,
-                         unitcell_lengths=ucl,
-                         unitcell_angles=traj.unitcell_angles[0])
+        traj = traj.image_molecules(anchor_molecules=[traj.top.find_molecules()[0]],
+                                    other_molecules=traj.top.find_molecules()[1:])
+    # Write coordinates to PDB file.
+    traj.save_pdb('output_recenter.pdb')
 
 
 def get_atoms_idx(system_structure,
