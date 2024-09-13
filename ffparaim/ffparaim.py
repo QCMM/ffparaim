@@ -126,8 +126,7 @@ class FFparAIM(object):
                 print('Calculating non-bonded parameters ...')
                 positions = mdt.get_positions(simulation)
                 mdt.image_molecule()
-                qm_region = qmt.set_qm_atoms(self.ligand_selection)
-                qmt.write_qmmm_pdb(qm_region)
+                qmt.write_qmmm_pdb(self.ligand_atom_list)
                 # QM/MM calculation.
                 print('QM/MM calculation in progress ...')
                 if exhaustive:

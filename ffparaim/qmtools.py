@@ -11,16 +11,6 @@ from string import Template
 from ffparaim import utils
 
 
-def set_qm_atoms(ligand_selection, pdb_file='output_recenter.pdb'):
-    """Define atom indices that are part of the QM region based on the user's selection."""
-
-    # Read PDB file.
-    pdb = mdtraj.load(pdb_file)
-    # Create a list of atom indices based on the full atom list order.
-    lig_atoms_idx = list(pdb.top.select(ligand_selection))
-    return lig_atoms_idx
-
-
 def write_qmmm_pdb(lig_atoms_idx, pdb_file='output_recenter.pdb'):
     """Write a PDB File with B-factor and occupancy columns compatible with
     ORCA QM/MM calculation."""
