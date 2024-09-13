@@ -11,12 +11,12 @@ pdb_file = sys.argv[2]
 def main():
 
     nb_params = FFparAIM(qm_charge=0,
-                         ligand_selection=':1',
+                         ligand_selection='resname LIG',
                          n_updates=5,
                          sampling_time=0.5,
                          total_qm_calculations=5,
                          method='PBE')
-    molecule, system_structure, system = nb_params.prepare(smiles, pdb_file)
+    molecule, lig_structure, system_structure, system = nb_params.prepare(smiles, pdb_file)
     nb_params.run(molecule,
                   system_structure,
                   system,

@@ -27,11 +27,11 @@ def separate_components(pdb_file,
     input."""
 
     # Load PDB input file.
-    pdb = pmd.load_file(pdb_file)
+    pdb = mdtraj.load(pdb_file)
     # Write PDB file for ligand only.
-    pdb[ligand_selection].write_pdb('lig.pdb')
+    pdb.atom_slice(pdb.top.select(ligand_selection)).save_pdb('lig.pdb')
     # Write PDB file for molecular environment.
-    pdb[f'!{ligand_selection}'].write_pdb('env.pdb')
+    pdb.atom_slice(pdb.top.select(f'not {ligand_selection}')).save_pdb('env.pdb')
 
 
 def fix_conect(lig_pdb_file='lig.pdb'):
@@ -202,8 +202,7 @@ def setup_simulation(system_structure,
                      positions,
                      update,
                      frames,
-                     restraint_dict=None,
-                     ligand_atom_list=None):
+                     restraint_dict=None):
     """Setup the OpenMM simulation with the current topology and the input coordinates
      or the current positions, in an update-depending form."""
 
@@ -211,9 +210,7 @@ def setup_simulation(system_structure,
     if restraint_dict is not None:
         system = set_restraints(system_structure.topology,
                                 system,
-                                positions,
-                                restraint_dict,
-                                ligand_atom_list)
+                                restraint_dict)
     # Create an integrator instance.
     integrator = openmm.LangevinIntegrator(298.15 * unit.kelvin,
                                            1 / unit.picosecond,

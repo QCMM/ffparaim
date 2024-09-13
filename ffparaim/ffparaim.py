@@ -19,7 +19,7 @@ class FFparAIM(object):
 
     def __init__(self,
                  qm_charge=0,
-                 ligand_selection=':1',
+                 ligand_selection='resname LIG',
                  n_updates=3,
                  sampling_time=25,
                  total_qm_calculations=100,
@@ -73,10 +73,11 @@ class FFparAIM(object):
         lig_structure = mdt.prepare_ligand(molecule, forcefield)
         env_structure = mdt.prepare_enviroment(ff_env)
         system_structure, system = mdt.create_system(lig_structure, env_structure)
-        return molecule, system_structure, system
+        return molecule, lig_structure, system_structure, system
 
     def run(self,
             molecule,
+            lig_structure,
             system_structure,
             system,
             off=False,
@@ -209,7 +210,7 @@ class FFparAIM(object):
                 smirks_dict = mdt.prepare_off_lj(molecule, off_ff, sig, eps)
             mdt.save_forcefield(off_ff, smirks_dict, outfile=f'd-mbis_{self.forcefield}')
         if csv:
-            output.to_csv(system_structure[self.ligand_selection], norm_atcharges, sig, eps)
+            output.to_csv(lig_structure, norm_atcharges, sig, eps)
         if pickle:
             output.to_pickle(self.data)
         # Get Polarization Energy value.

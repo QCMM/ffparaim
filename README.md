@@ -6,7 +6,27 @@ ffparaim
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
-Derivation of non-bonded non-polarizable force field parameters from Atom in Molecule properties.
+Derivation of non-bonded non-polarizable force field parameters from Atom-in-Molecules density partition.
+
+### Minimal setup
+
+Required dependencies:
+
+- openff-toolkit https://github.com/openforcefield/openff-toolkit
+- qc-denspart https://github.com/theochem/denspart
+- qc-iodata: https://github.com/theochem/iodata
+- qc-gbasis: https://github.com/theochem/gbasis
+
+Install (with dependencies):
+
+.. code-block:: bash
+
+    conda env create -n ffp -f environment.yml
+    conda activate ffp
+    pip install git+https://github.com/qcmm/ffparaim.git
+
+(There are no releases yet.)
+
 
 ### Copyright
 

@@ -2,10 +2,11 @@
 import os
 import shutil
 import sys
+import mdtraj
 
 import subprocess as sp
 
-from parmed.formats.pdb import PDBFile
+import parmed as pmd
 from string import Template
 from ffparaim import utils
 
@@ -14,14 +15,9 @@ def set_qm_atoms(ligand_selection, pdb_file='output_recenter.pdb'):
     """Define atom indices that are part of the QM region based on the user's selection."""
 
     # Read PDB file.
-    pdb = PDBFile.parse(pdb_file)
-    # Create a list of all atoms in the PDB file.
-    atom_list = pdb.atoms
-    # Create a list for atom selection.
-    lig_atoms = pdb[ligand_selection].atoms
+    pdb = mdtraj.load(pdb_file)
     # Create a list of atom indices based on the full atom list order.
-    lig_atoms_idx = [idx for at in lig_atoms for idx, atom in enumerate(atom_list)
-                     if (at.xx, at.xy, at.xz) == (atom.xx, atom.xy, atom.xz)]
+    lig_atoms_idx = list(pdb.top.select(ligand_selection))
     return lig_atoms_idx
 
 
@@ -30,7 +26,7 @@ def write_qmmm_pdb(lig_atoms_idx, pdb_file='output_recenter.pdb'):
     ORCA QM/MM calculation."""
 
     # Read PDB file.
-    pdb = PDBFile.parse(pdb_file)
+    pdb = pmd.load_file(pdb_file)
     # Iterate over every atom in the system.
     for atom in pdb.atoms:
         # Replace B-factor values for all atoms.
@@ -69,12 +65,11 @@ def write_orca_input(orca_inp,
         # Empty list for populate with geometry's field lines.
         geometry = []
         # Read PDB file.
-        pdb = PDBFile.parse(pdb_file)
-        # Extract coordinates for ligand.
-        coords = pdb[ligand_selection].coordinates
+        pdb = mdtraj.load(pdb_file)
+        # Extract coordinates for ligand in angstrom.
+        coords = pdb.atom_slice(pdb.top.select(ligand_selection)).xyz * 10
         # Generate a list with every element in the ligand.
-        atoms = [utils.elements[atom.atomic_number]
-                 for atom in pdb[ligand_selection].atoms]
+        atoms = [atom.element.symbol for atom in pdb.atom_slice(pdb.top.select(ligand_selection)).top.atoms]
         # Iterate over every atom elements and coordinates.
         for atom, coord in zip(atoms, coords):
             # Add string with formated string for geometry field.

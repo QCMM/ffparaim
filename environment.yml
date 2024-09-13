@@ -2,13 +2,11 @@ name: ffparaim
 channels:
   - conda-forge
 dependencies:
-  - python=3.9
-  - yank=0.25.2
   - openff-toolkit
   - pip
   - pip:
     - git+https://github.com/theochem/iodata.git
     - git+https://github.com/theochem/grid.git
     - git+https://github.com/theochem/gbasis.git
-    - git+https://github.com/lmacaya/denspart.git
+    - git+https://github.com/theochem/denspart.git
 
