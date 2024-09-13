@@ -34,9 +34,9 @@ def separate_components(pdb_file,
     pdb.atom_slice(pdb.top.select(f'not {ligand_selection}')).save_pdb('env.pdb')
 
 
-def fix_conect(lig_pdb_file='lig.pdb'):
-    lig = pytraj.load(lig_pdb_file)
-    lig.save('lig.pdb', options='pdbv3')
+def fix_pdb(pdbfile='lig.pdb'):
+    lig = pytraj.load(pdbfile)
+    lig.save(pdbfile, options='pdbv3')
 
 
 def define_molecule(smiles,
@@ -45,7 +45,7 @@ def define_molecule(smiles,
     SMILES string and a PDB file of the protonated ligand."""
 
     # Fix CONNECT records.
-    fix_conect(lig_pdb_file)
+    fix_pdb(lig_pdb_file)
     # Create RDKit template from SMILES.
     template = AllChem.MolFromSmiles(smiles)
     # Add hydrogens.

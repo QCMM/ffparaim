@@ -9,12 +9,15 @@ import subprocess as sp
 import parmed as pmd
 from string import Template
 from ffparaim import utils
+from ffparaim.mdtools import fix_pdb
 
 
 def write_qmmm_pdb(lig_atoms_idx, pdb_file='output_recenter.pdb'):
     """Write a PDB File with B-factor and occupancy columns compatible with
     ORCA QM/MM calculation."""
 
+    # Fix PDB file.
+    fix_pdb(pdb_file)
     # Read PDB file.
     pdb = pmd.load_file(pdb_file)
     # Iterate over every atom in the system.
@@ -30,7 +33,7 @@ def write_qmmm_pdb(lig_atoms_idx, pdb_file='output_recenter.pdb'):
 def write_orca_input(orca_inp,
                      atom=None,
                      ligand_selection=None,
-                     pdb_file="output_recenter.pdb",
+                     pdb_file="output_qmmm.pdb",
                      method='B3LYP',
                      basis='def2-TZVP',
                      qm_charge=0,
