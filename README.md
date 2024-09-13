@@ -6,7 +6,7 @@ ffparaim
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
-Derivation of non-bonded non-polarizable force field parameters from Atom-in-Molecules density partition.
+Derivation of non-bonded force field parameters from Atom-in-Molecules density partitioning.
 
 ### Minimal setup
 
@@ -20,10 +20,11 @@ Required dependencies:
 
 ### Install (with dependencies):
 
-
+    git clone https://github.com/QCMM/ffparaim.git
+    cd ffparaim
     conda env create -n ffp -f environment.yml
     conda activate ffp
-    pip install git+https://github.com/qcmm/ffparaim.git
+    pip install .
 
 (There are no releases yet.)
 
