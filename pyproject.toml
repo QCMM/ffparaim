@@ -26,9 +26,6 @@ classifiers = [
 dependencies = ["openff-toolkit>=0.10.6"]
 dynamic = ["version"]
 
-[tool.setuptools]
-py-modules = []
-
 [project.urls]
 Issues = "https://github.com/qcmm/ffparaim/issues"
 Source = "https://github.com/qcmm/ffparaim/"
