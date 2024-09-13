@@ -13,6 +13,7 @@ Derivation of non-bonded non-polarizable force field parameters from Atom-in-Mol
 Required dependencies:
 
 - openff-toolkit https://github.com/openforcefield/openff-toolkit
+- openmmtools https://github.com/choderalab/openmmtools
 - qc-denspart https://github.com/theochem/denspart
 - qc-iodata: https://github.com/theochem/iodata
 - qc-gbasis: https://github.com/theochem/gbasis
