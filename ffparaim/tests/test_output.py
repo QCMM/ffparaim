@@ -4,6 +4,7 @@ Unit and regression test for the ffparaim package. Testing output.py.
 
 # Import package, test suite, and other packages as needed
 import os
+import shutil
 import pytest
 import filecmp
 import pandas as pd
@@ -25,11 +26,12 @@ def test_to_pickle_invalid():
 
 
 def test_to_csv(tmpdir):
+    with as_file(files('ffparaim.data').joinpath('lig.pdb')) as lig_pdb_file:
+        shutil.copy(lig_pdb_file, tmpdir)
     os.chdir(tmpdir)
     molecule = mdt.define_molecule('c1ccc(cc1)O')
     forcefield = mdt.define_forcefield('openff_unconstrained-2.0.0.offxml')
-    with as_file(files('ffparaim.data').joinpath('lig.pdb')) as lig_pdb_file:
-        lig_structure = mdt.prepare_ligand(molecule, forcefield, lig_pdb_file)
+    lig_structure = mdt.prepare_ligand(molecule, forcefield)
     with as_file(files('ffparaim.data').joinpath('ffparaim.dat')) as data:
         df = pd.read_csv(data)
     charges = df.atomic_charges.to_list()

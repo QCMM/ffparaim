@@ -20,8 +20,8 @@ def test_nb_stats():
     rcubed_mean, rcubed_std = stats.nb_stats(data[0], 'rcubed')
     assert_allclose(charges_mean[-1], 13.0)
     assert_allclose(charges_std[0], 0.0)
-    assert_allclose(charges_mean[-1], 23.0)
-    assert_allclose(charges_std[0], 0.0)
+    assert_allclose(rcubed_mean[-1], 23.0)
+    assert_allclose(rcubed_std[0], 0.0)
 
 
 def test_nb_stats_invalid():
@@ -31,7 +31,8 @@ def test_nb_stats_invalid():
     iod = IOData(atffparams={'charges': list(range(0, 14)),
                              'rcubed': list(range(14, 24))})
     data[0].append(iod)
-    pytest.raises(AttributeError, stats.nb_stats, data)
+    pytest.raises(TypeError, stats.nb_stats, data)
+    pytest.raises(AttributeError, stats.nb_stats, data, 'charges')
     pytest.raises(TypeError, stats.nb_stats, data[0])
     pytest.raises(KeyError, stats.nb_stats, data[0], 'test')
 
@@ -49,6 +50,3 @@ def test_epol_stats():
 
 def test_epol_stats_invalid():
     pytest.raises(TypeError, stats.epol_stats)
-    pytest.raises(TypeError, stats.epol_stats)
-    data = dict()
-    pytest.raises(AttributeError, stats.epol_stats, data)

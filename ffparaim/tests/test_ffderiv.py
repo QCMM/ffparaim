@@ -12,18 +12,20 @@ import os
 import numpy as np
 
 from iodata import IOData
+from iodata.utils import FileFormatError
 from grid.molgrid import MolGrid
 from denspart.mbis import MBISProModel
 from grid.basegrid import LocalGrid
 from openff.toolkit.topology import Molecule
 
+from pathlib import Path
 from importlib_resources import files, as_file
 from numpy.testing import assert_equal, assert_allclose
 from numpy.core._exceptions import UFuncTypeError
 
 
 def test_ffderiv():
-    ffd = ffparaim.ForceFieldDerivation()
+    ffd = ffparaim.ffderiv.ForceFieldDerivation()
     assert ffd.data is None
     assert ffd.grid is None
     assert ffd.rho is None
@@ -33,23 +35,23 @@ def test_ffderiv():
 
 
 def test_ffderiv_invalid():
-    pytest.raises(TypeError, ffparaim.ForceFieldDerivation, 'test')
+    pytest.raises(TypeError, ffparaim.ffderiv.ForceFieldDerivation, 'test')
 
 
 def test_load_data():
-    ffd = ffparaim.ForceFieldDerivation()
+    ffd = ffparaim.ffderiv.ForceFieldDerivation()
     with as_file(files('ffparaim.data').joinpath('orca_uks.molden.input')) as infile:
         data = ffd.load_data(infile)
     assert isinstance(data, IOData) is True
 
 
 def test_load_data_invalid():
-    ffd = ffparaim.ForceFieldDerivation()
-    pytest.raises(ValueError, ffd.load_data, 'data')
+    ffd = ffparaim.ffderiv.ForceFieldDerivation()
+    pytest.raises(FileFormatError, ffd.load_data, 'data')
 
 
 def test_set_molgrid():
-    ffd = ffparaim.ForceFieldDerivation()
+    ffd = ffparaim.ffderiv.ForceFieldDerivation()
     with as_file(files('ffparaim.data').joinpath('orca_uks.molden.input')) as infile:
         data = ffd.load_data(infile)
     ffd.set_molgrid(data)
@@ -58,7 +60,7 @@ def test_set_molgrid():
 
 
 def test_set_molgrid_invalid():
-    ffd = ffparaim.ForceFieldDerivation()
+    ffd = ffparaim.ffderiv.ForceFieldDerivation()
     with as_file(files('ffparaim.data').joinpath('orca_uks.molden.input')) as infile:
         data = ffd.load_data(infile)
     pytest.raises(TypeError, ffd.set_molgrid)
@@ -70,7 +72,7 @@ def test_set_molgrid_invalid():
 
 
 def test_do_partitioning():
-    ffd = ffparaim.ForceFieldDerivation()
+    ffd = ffparaim.ffderiv.ForceFieldDerivation()
     with as_file(files('ffparaim.data').joinpath('orca_uks.molden.input')) as infile:
         data = ffd.load_data(infile)
     ffd.set_molgrid(data)
@@ -90,7 +92,7 @@ def test_do_partitioning():
 
 
 def test_do_partitioning_invalid():
-    ffd = ffparaim.ForceFieldDerivation()
+    ffd = ffparaim.ffderiv.ForceFieldDerivation()
     pytest.raises(TypeError, ffd.do_partitioning)
     pytest.raises(TypeError, ffd.do_partitioning, 'data')
     with as_file(files('ffparaim.data').joinpath('orca_uks.molden.input')) as infile:
@@ -104,7 +106,7 @@ def test_do_partitioning_invalid():
 
 
 def test_get_charges():
-    ffd = ffparaim.ForceFieldDerivation()
+    ffd = ffparaim.ffderiv.ForceFieldDerivation()
     with as_file(files('ffparaim.data').joinpath('orca_uks.molden.input')) as infile:
         data = ffd.load_data(infile)
     ffd.set_molgrid(data)
@@ -113,14 +115,15 @@ def test_get_charges():
     assert_allclose(results['charges'], np.array([-9.82281732e-08]), atol=1.e-8)
 
 
-def test_get_epol(tmpdir):
-    os.chdir(tmpdir)
-    ffd = ffparaim.ForceFieldDerivation()
+def test_get_epol():
+    datadir = Path(__file__).parent / '../data'
+    os.chdir(datadir)
+    ffd = ffparaim.ffderiv.ForceFieldDerivation()
     assert_equal(ffd.get_epol(), 5.438830183804583)
 
 
 def test_get_rcubed():
-    ffd = ffparaim.ForceFieldDerivation()
+    ffd = ffparaim.ffderiv.ForceFieldDerivation()
     with as_file(files('ffparaim.data').joinpath('orca_uks.molden.input')) as infile:
         data = ffd.load_data(infile)
     ffd.set_molgrid(data)
@@ -162,7 +165,7 @@ def test_symmetrize_invalid():
 
 def test_get_lj_params():
     mol = Molecule.from_smiles('C=O')
-    with as_file(files('ffparaim.data').joinpath('rcubed_table.json')) as infile:
+    with open(files('ffparaim.data').joinpath('rcubed_table.json')) as infile:
         rcubed_table = {int(k): v for k, v in json.load(infile).items()}
     sig, eps = ffparaim.ffderiv.get_lj_params(mol, np.array([1, 2, 3, 4]), rcubed_table)
     assert_allclose(sig, [0.27003539347805483, 0.2842451596185054, 0.3395921721548409, 0.3538392956260175])
@@ -174,7 +177,7 @@ def test_get_lj_params_invalid():
     pytest.raises(TypeError, ffparaim.ffderiv.get_lj_params)
     pytest.raises(TypeError, ffparaim.ffderiv.get_lj_params, mol)
     pytest.raises(TypeError, ffparaim.ffderiv.get_lj_params, mol, np.array([1, 2, 3, 4]))
-    with as_file(files('ffparaim.data').joinpath('rcubed_table.json')) as infile:
+    with open(files('ffparaim.data').joinpath('rcubed_table.json')) as infile:
         rcubed_table = json.load(infile)
     pytest.raises(KeyError, ffparaim.ffderiv.get_lj_params, mol, np.array([1, 2, 3, 4]), rcubed_table)
     rcubed_table = {int(k): v for k, v in rcubed_table.items()}

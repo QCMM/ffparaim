@@ -26,7 +26,7 @@ def test_ffparaim_imported():
 def test_ffparaim():
     ffp = ffparaim.FFparAIM()
     assert ffp.qm_charge == 0
-    assert ffp.ligand_selection == ':1'
+    assert ffp.ligand_selection == 'resname LIG'
     assert ffp.ligand_atom_list is None
     assert ffp.n_updates == 3
     assert ffp.sampling_time == 25
@@ -39,9 +39,9 @@ def test_ffparaim():
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_ffparaim_prepare(tmpdir):
     os.chdir(tmpdir)
-    ffp = ffparaim.FFparAIM()
+    ffp = ffparaim.FFparAIM(ligand_selection='resname MOL')
     with as_file(files('ffparaim.data').joinpath('solvent.pdb')) as infile:
-        molecule, system_structure, system = ffp.prepare('c1ccc(cc1)O', str(infile))
+        molecule, lig_structure, system_structure, system = ffp.prepare('c1ccc(cc1)O', str(infile))
     assert ffp.smiles == 'c1ccc(cc1)O'
     assert 'solvent.pdb' in ffp.pdb_file
     assert ffp.forcefield == 'openff_unconstrained-2.0.0.offxml'
@@ -50,13 +50,14 @@ def test_ffparaim_prepare(tmpdir):
     assert filecmp.cmp(os.path.join(tmpdir, 'lig.pdb'),
                        files('ffparaim.data').joinpath('lig.pdb')) == 0
     assert isinstance(molecule, Molecule) is True
+    assert isinstance(lig_structure, Structure) is True
     assert isinstance(system_structure, Structure) is True
     assert isinstance(system, System) is True
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_ffparaim_prepare_invalid(tmpdir):
-    ffp = ffparaim.FFparAIM()
+    ffp = ffparaim.FFparAIM(ligand_selection='resname MOL')
     with as_file(files('ffparaim.data').joinpath('solvent.pdb')) as infile:
         pytest.raises(TypeError, ffp.prepare)
         pytest.raises(TypeError, ffp.prepare, 1, str(infile))

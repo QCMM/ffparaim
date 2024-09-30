@@ -6,4 +6,3 @@
     Use_QM_InfoFromPDB true     # get QM atoms from pdb file
 end
 *pdbfile 0 1 output_qmmm.pdb
-
