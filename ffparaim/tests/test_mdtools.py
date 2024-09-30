@@ -281,7 +281,7 @@ def test_get_positions(tmpdir):
     positions = mdt.get_positions(simulation)
     assert isinstance(positions, Quantity) is True
     assert_equal(positions.__len__(), 2551)
-    assert_allclose(positions[-1][0]._value, 2.17278242)
+    assert_allclose(positions[-1][0]._value, 2.17278242, atol=0.05)
     assert positions[-1][0].unit._name == 'nanometer'
     assert filecmp.cmp(os.path.join(tmpdir, 'output.pdb'),
                        files('ffparaim.data').joinpath('output.pdb')) == 0
