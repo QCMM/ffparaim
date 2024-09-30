@@ -14,7 +14,7 @@ def set_restraints(topology,
     print('Setting restraints ...')
     top = mdtraj.Topology.from_openmm(topology)
     # Check for restraints added to the system.
-    restraint_force = forces.find_forces(system, r'\bFlatBottom|\bHarmonicRestraint|', only_one=False)
+    restraint_force = forces.find_forces(system, r'\bFlatBottom|\bHarmonicRestraint', only_one=False)
     # If restraint dict is defined and there is a restraint definition in system.
     if restraint_dict is not None and len(restraint_force) == 0:
         # If harmonic restraints are defined in the dictionary.
