@@ -18,6 +18,7 @@ def main():
                          method='PBE')
     molecule, lig_structure, system_structure, system = nb_params.prepare(smiles, pdb_file)
     nb_params.run(molecule,
+                  lig_structure,
                   system_structure,
                   system,
                   off=True,
