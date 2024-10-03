@@ -2,7 +2,6 @@ ffparaim
 ==============================
 [//]: # (Badges)
 [![GitHub Actions Build Status](https://github.com/QCMM/ffparaim/workflows/CI/badge.svg)](https://github.com/QCMM/ffparaim/actions/workflows/CI.yaml)
-[![codecov](https://codecov.io/gh/QCMM/ffparaim/branch/master/graph/badge.svg)](https://codecov.io/gh/QCMM/ffparaim)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
