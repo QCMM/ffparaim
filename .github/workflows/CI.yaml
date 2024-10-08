@@ -25,7 +25,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.10", "3.11"]
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
     - uses: actions/checkout@v1
@@ -69,9 +69,9 @@ jobs:
       run: |
         pytest -v --cov=ffparaim --cov-report=xml --color=yes ffparaim/tests/
 
-    # - name: CodeCov
-    #  uses: codecov/codecov-action@v1
-    #  with:
-    #    file: ./coverage.xml
-    #    flags: unittests
-    #    name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
+    - name: CodeCov
+      uses: codecov/codecov-action@v1
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
