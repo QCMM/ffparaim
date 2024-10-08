@@ -28,7 +28,7 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
 
     - name: Additional info about the build
       shell: bash
@@ -39,7 +39,7 @@ jobs:
 
 
     # More info on options: https://github.com/conda-incubator/setup-miniconda
-    - uses: conda-incubator/setup-miniconda@v2
+    - uses: conda-incubator/setup-miniconda@v3
       with:
         miniconda-version: "latest"
         python-version: ${{ matrix.python-version }}
@@ -70,7 +70,7 @@ jobs:
         pytest -v --cov=ffparaim --cov-report=xml --color=yes ffparaim/tests/
 
     - name: CodeCov
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         flags: unittests
