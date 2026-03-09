@@ -4,6 +4,7 @@ channels:
 dependencies:
   - openff-toolkit
   - openmmtools
+  - numpy
   - pip
   - pip:
     - git+https://github.com/theochem/iodata.git
