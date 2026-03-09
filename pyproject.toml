@@ -10,7 +10,7 @@ authors = [
 description = "ffparaim performs derivation of non-bonded non-polarizable force field parameters from Atom-in-Molecules density partitioning."
 readme = "README.md"
 license = {file = "LICENSE"}
-requires-python = ">=3.10"
+requires-python = ">3.10"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
@@ -18,10 +18,8 @@ classifiers = [
     "Intended Audience :: Education",
     "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
     "Natural Language :: English",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 dependencies = ["openff-toolkit>=0.10.6", "openmmtools"]
 dynamic = ["version"]
@@ -36,11 +34,11 @@ ffparaim = "ffparaim.__main__:main"
 
 [tool.black]
 line-length = 100
-target-version = ['py310']
+target-version = ['py311']
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "UP", "B", "I", "PGH", "PL", "RUF"]
