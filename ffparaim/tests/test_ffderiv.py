@@ -21,7 +21,7 @@ from openff.toolkit.topology import Molecule
 from pathlib import Path
 from importlib_resources import files, as_file
 from numpy.testing import assert_equal, assert_allclose
-from numpy.core._core._exceptions import UFuncTypeError
+from numpy._core._exceptions import UFuncTypeError
 
 
 def test_ffderiv():
