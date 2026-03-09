@@ -119,7 +119,7 @@ def test_get_epol():
     datadir = Path(__file__).parent / '../data'
     os.chdir(datadir)
     ffd = ffparaim.ffderiv.ForceFieldDerivation()
-    assert_equal(ffd.get_epol(), 5.438830183804583)
+    assert_allclose(ffd.get_epol(), 5.438830183804583, rtol=1e-10)
 
 
 def test_get_rcubed():
