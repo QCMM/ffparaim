@@ -11,7 +11,7 @@ Derivation of non-bonded force field parameters from Atom-in-Molecules density p
 
 Required dependencies:
 
-- ORCA 5.0.x https://orcaforum.kofo.mpg.de/app.php/portal
+- ORCA 5.0.3 https://orcaforum.kofo.mpg.de/app.php/portal
 - openff-toolkit 0.18.0 https://github.com/openforcefield/openff-toolkit
 - openmmtools 0.26.0 https://github.com/choderalab/openmmtools
 - qc-denspart https://github.com/theochem/denspart
